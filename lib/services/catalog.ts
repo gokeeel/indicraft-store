@@ -7,6 +7,7 @@ export type ProductFilter = {
   region?: string;
   minPrice?: number;
   maxPrice?: number;
+  occasion?: string;
   q?: string;
 };
 
@@ -22,6 +23,7 @@ export async function getProducts(
   if (filter.category) where.category = { slug: filter.category };
   if (filter.material) where.material = filter.material;
   if (filter.region) where.region = filter.region;
+  if (filter.occasion) where.occasion = filter.occasion;
   if (filter.minPrice != null || filter.maxPrice != null) {
     where.price = {};
     if (filter.minPrice != null) where.price.gte = filter.minPrice;
@@ -57,6 +59,13 @@ export async function getProducts(
 export async function getProductBySlug(slug: string) {
   return prisma.product.findUnique({
     where: { slug },
+    include: { images: true, category: true, vendor: true },
+  });
+}
+
+export async function getProductById(id: string) {
+  return prisma.product.findUnique({
+    where: { id },
     include: { images: true, category: true, vendor: true },
   });
 }
