@@ -2,7 +2,8 @@ import type { ToolResult } from "@/lib/agent/tools";
 
 export type Block =
   | { type: "product_carousel"; products: Extract<ToolResult, { tool: "search_products" }>["products"] }
-  | { type: "product_detail"; product: Extract<ToolResult, { tool: "get_product"; product: unknown }>["product"] };
+  | { type: "product_detail"; product: Extract<ToolResult, { tool: "get_product"; product: unknown }>["product"] }
+  | { type: "quick_replies"; question: string; options: string[] };
 
 export function toBlocks(toolName: string, result: ToolResult): Block[] {
   if ("error" in result) return [];
@@ -13,6 +14,10 @@ export function toBlocks(toolName: string, result: ToolResult): Block[] {
     case "get_product":
       return result.tool === "get_product" && "product" in result
         ? [{ type: "product_detail", product: result.product }]
+        : [];
+    case "ask_user":
+      return result.tool === "ask_user"
+        ? [{ type: "quick_replies", question: result.question, options: result.options }]
         : [];
     default:
       return [];

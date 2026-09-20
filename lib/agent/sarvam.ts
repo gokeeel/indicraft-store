@@ -102,6 +102,7 @@ export class MockLLM implements SarvamLLM {
 
     // A tool result just came back — give a short scripted reply instead of looping again.
     if (lastMessage?.role === "tool") {
+      if (lastMessage.name === "ask_user") return { text: "Take your pick!" };
       return { text: "Semma! Here's what I found. Want to see more or narrow it down?" };
     }
 
@@ -111,6 +112,17 @@ export class MockLLM implements SarvamLLM {
     const priceMatch = text.match(/(\d{3,6})/);
     const maxPrice = priceMatch ? Number(priceMatch[1]) : undefined;
 
+    if (/gift|surprise|something nice|recommend/.test(text)) {
+      return {
+        toolCalls: [
+          {
+            id: "mock-1",
+            name: "ask_user",
+            args: { question: "What's your budget?", options: ["Under ₹1000", "₹1000-2500", "₹2500+"] },
+          },
+        ],
+      };
+    }
     if (/saree|dupatta|fabric|scarf|stole/.test(text)) {
       return {
         toolCalls: [

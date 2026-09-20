@@ -3,6 +3,7 @@ import Image from "next/image";
 import { User, ShoppingBag, Heart } from "lucide-react";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchBar } from "@/components/layout/SearchBar";
+import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
@@ -32,7 +33,9 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
 
         <SearchBar className="ml-auto hidden max-w-sm flex-1 items-center rounded-md border border-border px-3 md:flex" />
 
-        <Link href="/account/wishlist" className="ml-auto p-2 hover:text-primary md:ml-4" aria-label="Wishlist">
+        <AgentToggleButton />
+
+        <Link href="/account/wishlist" className="ml-auto p-2 hover:text-primary md:ml-0" aria-label="Wishlist">
           <Heart className="h-5 w-5" />
         </Link>
 

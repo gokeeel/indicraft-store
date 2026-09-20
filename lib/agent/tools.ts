@@ -19,6 +19,11 @@ const getProductArgs = z.object({
   productId: z.string(),
 });
 
+const askUserArgs = z.object({
+  question: z.string().max(300),
+  options: z.array(z.string().max(60)).min(2).max(6),
+});
+
 // Sarvam's tool-calling API is OpenAI-compatible: {type:"function", function:{name, description, parameters}}
 // where parameters is a JSON Schema object. Kept hand-written since only two tools exist in Phase 1.
 export const TOOL_SCHEMAS: ToolSchema[] = [
@@ -56,12 +61,29 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "ask_user",
+      description:
+        "Ask the user a short clarifying question with 2-6 tappable options, e.g. to narrow down budget, occasion, material, or region before searching. Does not return data itself — the UI shows the chips.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string" },
+          options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 6 },
+        },
+        required: ["question", "options"],
+      },
+    },
+  },
 ];
 
 export type ToolResult =
   | { tool: "search_products"; products: Awaited<ReturnType<typeof getProducts>>["items"] }
   | { tool: "get_product"; product: NonNullable<Awaited<ReturnType<typeof getProductById>>> }
   | { tool: "get_product"; error: string }
+  | { tool: "ask_user"; question: string; options: string[] }
   | { error: string };
 
 export async function runTool(name: string, rawArgs: unknown, _ctx: ToolContext): Promise<ToolResult> {
@@ -89,6 +111,10 @@ export async function runTool(name: string, rawArgs: unknown, _ctx: ToolContext)
       const product = await getProductById(args.productId);
       if (!product) return { tool: "get_product", error: "Product not found" };
       return { tool: "get_product", product };
+    }
+    case "ask_user": {
+      const args = askUserArgs.parse(rawArgs);
+      return { tool: "ask_user", question: args.question, options: args.options };
     }
     default:
       return { error: `Unknown tool: ${name}` };
