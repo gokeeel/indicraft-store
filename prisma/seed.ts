@@ -12,6 +12,25 @@ const categories = [
   { name: "Uncategorized", slug: "uncategorized" },
 ];
 
+// Real product photos (from the client's brand asset repo) keyed by product slug.
+// Products without an entry here fall back to a picsum placeholder.
+const REAL_PRODUCT_IMAGES: Record<string, string> = {
+  "banarasi-silk-saree-zari-border": "banarasi-silk-saree-zari-border.webp",
+  "ikat-cotton-dupatta": "ikat-cotton-dupatta.webp",
+  "chanderi-handwoven-fabric-2m": "chanderi-handwoven-fabric-2m.webp",
+  "kalamkari-block-print-fabric": "kalamkari-block-print-fabric.jpg",
+  "jamdani-cotton-saree": "jamdani-cotton-saree.jpg",
+  "ajrakh-block-print-stole": "ajrakh-block-print-stole.jpg",
+  "dhokra-brass-tribal-figurine": "dhokra-brass-tribal-figurine.jpg",
+  "blue-pottery-decorative-vase": "blue-pottery-decorative-vase.jpg",
+  "warli-art-wall-hanging": "warli-art-wall-hanging.webp",
+  "channapatna-wooden-toy-set": "channapatna-wooden-toy-set.webp",
+  "brass-kansa-thali-set": "brass-kansa-thali-set.webp",
+  "handcrafted-marble-coasters-set-of-6": "handcrafted-marble-coasters-set-of-6.jpg",
+  "handmade-jute-tote-bag": "handmade-jute-tote-bag.webp",
+  "meenakari-enamel-jewellery-box": "meenakari-enamel-jewellery-box.jpg",
+};
+
 type SeedProduct = {
   name: string;
   category: string;
@@ -158,31 +177,72 @@ async function main() {
       },
     });
 
-    const existingImages = await prisma.productImage.count({ where: { productId: product.id } });
-    if (existingImages === 0) {
-      await prisma.productImage.create({
-        data: {
+    await prisma.productImage.deleteMany({ where: { productId: product.id } });
+    await prisma.productImage.create({
+      data: {
+        productId: product.id,
+        url: REAL_PRODUCT_IMAGES[slug] ? `/images/products/${REAL_PRODUCT_IMAGES[slug]}` : `https://picsum.photos/seed/${slug}/600/600`,
+        altText: p.name,
+        position: 0,
+      },
+    });
+  }
+
+  // Fake reviewer accounts, used only to attach display names to seeded reviews.
+  const reviewerNames = [
+    "Ananya Rao",
+    "Vikram Nair",
+    "Sneha Kulkarni",
+    "Rohan Mehta",
+    "Divya Iyer",
+    "Arjun Singh",
+    "Kavya Reddy",
+    "Aditya Ghosh",
+  ];
+  const reviewers = [];
+  for (const name of reviewerNames) {
+    const email = `${slugify(name)}@reviewer.indicraft.test`;
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: { name, email, password: passwordHash, role: "customer" },
+    });
+    reviewers.push(user);
+  }
+
+  const reviewComments = [
+    "Beautiful craftsmanship, exactly as pictured.",
+    "Good quality, arrived well packaged.",
+    "Loved the colours and finish — will buy again.",
+    "Nice piece, slightly smaller than I expected.",
+    "Authentic handmade feel, very happy with this.",
+    "Great value for the price.",
+    null,
+    null,
+  ];
+
+  const allProducts = await prisma.product.findMany({ select: { id: true } });
+  let reviewCount = 0;
+  for (const [i, product] of allProducts.entries()) {
+    const numReviews = 1 + ((i * 7) % 4); // deterministic spread of 1-4 reviews per product
+    for (let r = 0; r < numReviews; r++) {
+      const reviewer = reviewers[(i + r) % reviewers.length];
+      const rating = 3 + ((i + r) % 3); // 3-5 stars
+      await prisma.review.upsert({
+        where: { userId_productId: { userId: reviewer.id, productId: product.id } },
+        update: {},
+        create: {
+          userId: reviewer.id,
           productId: product.id,
-          url: `https://picsum.photos/seed/${slug}/600/600`,
-          altText: p.name,
-          position: 0,
+          rating,
+          comment: reviewComments[(i + r) % reviewComments.length],
         },
       });
+      reviewCount++;
     }
   }
 
-  await prisma.coupon.upsert({
-    where: { code: "WELCOME10" },
-    update: {},
-    create: { code: "WELCOME10", percentOff: 10, active: true },
-  });
-  await prisma.coupon.upsert({
-    where: { code: "FESTIVE25" },
-    update: {},
-    create: { code: "FESTIVE25", percentOff: 25, active: true },
-  });
-
-  console.log(`Seeded ${categories.length} categories, ${products.length} products, and 2 coupons.`);
+  console.log(`Seeded ${categories.length} categories, ${products.length} products, and ${reviewCount} reviews.`);
 }
 
 main()

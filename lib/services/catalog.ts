@@ -73,15 +73,6 @@ export async function getProductReviews(productId: string) {
   return { reviews, average: agg._avg.rating ?? 0, count: agg._count };
 }
 
-export async function userHasPurchased(userId: string, productId: string) {
-  // Payment isn't wired up yet, so every order currently stays "pending_payment" —
-  // gate on order existence instead of a paid status until real payment lands.
-  const count = await prisma.orderItem.count({
-    where: { productId, order: { userId } },
-  });
-  return count > 0;
-}
-
 export async function getRelatedProducts(categoryId: string, excludeId: string, take = 4) {
   return prisma.product.findMany({
     where: { categoryId, id: { not: excludeId } },

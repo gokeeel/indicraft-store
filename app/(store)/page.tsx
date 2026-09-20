@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product/ProductCard";
 import { getCategories, getProducts } from "@/lib/services/catalog";
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  fabric: "/images/category-fabric.jpg",
+  "home-decor": "/images/category-home-decor.jpg",
+  household: "/images/category-household.jpg",
+};
+
 export default async function HomePage() {
   const [categories, featured, dealResult] = await Promise.all([
     getCategories(),
@@ -14,7 +20,15 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="relative flex min-h-[420px] items-center bg-[#222] text-white">
+      <section className="relative flex min-h-[420px] items-center text-white">
+        <Image
+          src="/images/hero.jpg"
+          alt="Artisan at a handloom"
+          fill
+          priority
+          className="object-cover object-[70%_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
         <div className="relative z-10 mx-auto max-w-7xl px-4">
           <span className="inline-block rounded-full bg-primary px-3 py-1 text-xs font-semibold">
             25% OFF Festive Collection
@@ -42,7 +56,7 @@ export default async function HomePage() {
             >
               <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-full bg-black/5">
                 <Image
-                  src={`https://picsum.photos/seed/${category.slug}/200/200`}
+                  src={CATEGORY_IMAGES[category.slug] ?? `https://picsum.photos/seed/${category.slug}/200/200`}
                   alt={category.name}
                   fill
                   className="object-cover"
@@ -88,7 +102,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid items-center gap-6 md:grid-cols-2">
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <Image src="https://picsum.photos/seed/artisan-story/800/600" alt="Artisan at work" fill className="object-cover" />
+            <Image src="/images/artisan-story.jpg" alt="Artisan hand-carving woodwork" fill className="object-cover" />
           </div>
           <div>
             <h2 className="mb-3 text-2xl font-bold">Our Artisan Story</h2>

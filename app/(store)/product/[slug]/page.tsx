@@ -11,12 +11,7 @@ import { AddToCartForm } from "@/components/product/AddToCartForm";
 import { WishlistButton } from "@/components/product/WishlistButton";
 import { Reviews } from "@/components/product/Reviews";
 import { ProductCard } from "@/components/product/ProductCard";
-import {
-  getProductBySlug,
-  getRelatedProducts,
-  getProductReviews,
-  userHasPurchased,
-} from "@/lib/services/catalog";
+import { getProductBySlug, getRelatedProducts, getProductReviews } from "@/lib/services/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -41,13 +36,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const [related, { reviews, average, count }, wishlisted, purchased] = await Promise.all([
+  const [related, { reviews, average, count }, wishlisted] = await Promise.all([
     getRelatedProducts(product.categoryId, product.id),
     getProductReviews(product.id),
     userId
       ? prisma.wishlistItem.findUnique({ where: { userId_productId: { userId, productId: product.id } } })
       : null,
-    userId ? userHasPurchased(userId, product.id) : false,
   ]);
 
   return (
@@ -123,13 +117,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
-      <Reviews
-        productId={product.id}
-        average={average}
-        count={count}
-        reviews={reviews}
-        canReview={purchased}
-      />
+      <Reviews average={average} count={count} reviews={reviews} />
 
       {related.length > 0 && (
         <section className="mt-16">

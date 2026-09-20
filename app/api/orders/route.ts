@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/services/catalog";
 import { clearCart } from "@/lib/services/cart";
 
-const schema = z.object({ addressId: z.string(), couponCode: z.string().trim().optional() });
+const schema = z.object({ addressId: z.string() });
 
 const TAX_RATE = 0.05;
 const FREE_SHIPPING_THRESHOLD = 999;
@@ -46,30 +46,15 @@ export async function POST(req: NextRequest) {
     (sum, item) => sum + Number(item.product.salePrice ?? item.product.price) * item.quantity,
     0
   );
-
-  let discount = 0;
-  let couponCode: string | undefined;
-  if (parsed.data.couponCode) {
-    const coupon = await prisma.coupon.findUnique({ where: { code: parsed.data.couponCode.toUpperCase() } });
-    if (!coupon || !coupon.active) {
-      return NextResponse.json({ error: "Invalid or inactive coupon code" }, { status: 400 });
-    }
-    discount = Math.round(subtotal * (coupon.percentOff / 100) * 100) / 100;
-    couponCode = coupon.code;
-  }
-
-  const shipping = subtotal - discount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const taxable = subtotal - discount;
-  const tax = Math.round(taxable * TAX_RATE * 100) / 100;
-  const total = taxable + tax + shipping;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
+  const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+  const total = subtotal + tax + shipping;
 
   const order = await prisma.order.create({
     data: {
       userId,
       addressId: address.id,
       subtotal,
-      discount,
-      couponCode,
       shipping,
       tax,
       total,

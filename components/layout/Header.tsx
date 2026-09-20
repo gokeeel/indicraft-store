@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { User, ShoppingBag, Heart } from "lucide-react";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchBar } from "@/components/layout/SearchBar";
@@ -16,7 +17,8 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
         <MobileNav links={NAV_LINKS} />
 
-        <Link href="/" className="text-xl font-bold text-primary">
+        <Link href="/" className="flex items-center gap-1.5 text-xl font-bold text-primary">
+          <Image src="/images/logo-mark.png" alt="" width={24} height={24} className="rounded-sm" />
           Indicraft
         </Link>
 

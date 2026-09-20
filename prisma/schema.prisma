@@ -123,8 +123,6 @@ model Order {
   addressId  String
   status     OrderStatus @default(pending_payment)
   subtotal   Decimal     @db.Decimal(10, 2)
-  discount   Decimal     @default(0) @db.Decimal(10, 2)
-  couponCode String?
   shipping   Decimal     @default(0) @db.Decimal(10, 2)
   tax        Decimal     @db.Decimal(10, 2)
   total      Decimal     @db.Decimal(10, 2)
@@ -153,14 +151,6 @@ model Payment {
   status    String   @default("pending")
   amount    Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
-}
-
-model Coupon {
-  id            String   @id @default(cuid())
-  code          String   @unique
-  percentOff    Int
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
 }
 
 model Address {
