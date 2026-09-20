@@ -10,7 +10,10 @@ export type Block =
       subtotal: number;
       shipping: number;
       total: number;
-    };
+    }
+  | { type: "address_picker"; addresses: Extract<ToolResult, { tool: "list_addresses" }>["addresses"] }
+  | { type: "address_form" }
+  | (Omit<Extract<ToolResult, { tool: "order_summary"; items: unknown }>, "tool"> & { type: "order_summary" });
 
 export function toBlocks(result: ToolResult): Block[] {
   if ("error" in result) return [];
@@ -25,6 +28,25 @@ export function toBlocks(result: ToolResult): Block[] {
     case "cart":
       return "items" in result
         ? [{ type: "cart", items: result.items, subtotal: result.subtotal, shipping: result.shipping, total: result.total }]
+        : [];
+    case "list_addresses":
+      return [{ type: "address_picker", addresses: result.addresses }];
+    case "request_new_address":
+      return [{ type: "address_form" }];
+    case "order_summary":
+      return "items" in result
+        ? [
+            {
+              type: "order_summary",
+              items: result.items,
+              address: result.address,
+              subtotal: result.subtotal,
+              shipping: result.shipping,
+              total: result.total,
+              confirmToken: result.confirmToken,
+              expiresAt: result.expiresAt,
+            },
+          ]
         : [];
     default:
       return [];

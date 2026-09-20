@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { getProducts, getProductById, getCartSummary } from "@/lib/services/catalog";
 import { addToCart, updateCartItemQuantity, removeFromCart } from "@/lib/services/cart";
+import { getAddresses } from "@/lib/services/addresses";
+import { buildOrderPreview, type OrderPreview } from "@/lib/agent/preview";
 import type { ToolSchema } from "@/lib/agent/sarvam";
 
 export type ToolContext = { userId: string };
@@ -37,6 +39,10 @@ const updateCartItemArgs = z.object({
 
 const removeCartItemArgs = z.object({
   itemId: z.string(),
+});
+
+const previewOrderArgs = z.object({
+  addressId: z.string(),
 });
 
 // Sarvam's tool-calling API is OpenAI-compatible: {type:"function", function:{name, description, parameters}}
@@ -142,6 +148,36 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_addresses",
+      description: "Get the user's saved shipping addresses, for choosing one at checkout.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "request_new_address",
+      description:
+        "Show the user a form to add a new shipping address. Call this when they want to check out and have no saved address, or want to use a different one. Takes no arguments and returns no data — never try to fill in the address fields yourself, the user types them into the form.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "preview_order",
+      description:
+        "Compute the final order total for a given saved address and show the user an order summary to confirm. Creates nothing yet — the user must tap Confirm in the app. Requires the cart to be non-empty and the address to belong to the user.",
+      parameters: {
+        type: "object",
+        properties: { addressId: { type: "string", description: "One of the user's saved address IDs" } },
+        required: ["addressId"],
+      },
+    },
+  },
 ];
 
 type CartSummary = Awaited<ReturnType<typeof getCartSummary>>;
@@ -153,6 +189,10 @@ export type ToolResult =
   | { tool: "ask_user"; question: string; options: string[] }
   | ({ tool: "cart" } & CartSummary)
   | { tool: "cart"; error: string; available?: number }
+  | { tool: "list_addresses"; addresses: Awaited<ReturnType<typeof getAddresses>> }
+  | { tool: "request_new_address" }
+  | ({ tool: "order_summary" } & OrderPreview)
+  | { tool: "order_summary"; error: string }
   | { error: string };
 
 function stockErrorMessage(reason: "out_of_stock" | "not_found", available?: number) {
@@ -216,6 +256,19 @@ export async function runTool(name: string, rawArgs: unknown, ctx: ToolContext):
       await removeFromCart(ctx.userId, args.itemId);
       const cart = await getCartSummary(ctx.userId);
       return { tool: "cart", ...cart };
+    }
+    case "list_addresses": {
+      const addresses = await getAddresses(ctx.userId);
+      return { tool: "list_addresses", addresses };
+    }
+    case "request_new_address": {
+      return { tool: "request_new_address" };
+    }
+    case "preview_order": {
+      const args = previewOrderArgs.parse(rawArgs);
+      const result = await buildOrderPreview(ctx.userId, args.addressId);
+      if (!result.ok) return { tool: "order_summary", error: result.error };
+      return { tool: "order_summary", ...result.preview };
     }
     default:
       return { error: `Unknown tool: ${name}` };

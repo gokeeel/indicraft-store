@@ -4,16 +4,23 @@ import { ProductCarousel } from "@/components/agent/ProductCarousel";
 import { ProductDetailCard } from "@/components/agent/ProductDetailCard";
 import { QuickReplies } from "@/components/agent/QuickReplies";
 import { CartCard } from "@/components/agent/CartCard";
+import { AddressPicker } from "@/components/agent/AddressPicker";
+import { AddressFormCard } from "@/components/agent/AddressFormCard";
+import { OrderSummaryCard } from "@/components/agent/OrderSummaryCard";
 import type { Block } from "@/lib/agent/blocks";
 
 export function BlockRenderer({
   block,
   onQuickReply,
   onAddToCart,
+  onSelectAddress,
+  onRequestNewAddress,
 }: {
   block: Block;
   onQuickReply: (value: string) => void;
   onAddToCart: (productId: string) => void;
+  onSelectAddress: (addressId: string) => void;
+  onRequestNewAddress: () => void;
 }) {
   switch (block.type) {
     case "product_carousel":
@@ -24,6 +31,22 @@ export function BlockRenderer({
       return <QuickReplies question={block.question} options={block.options} onSelect={onQuickReply} />;
     case "cart":
       return <CartCard items={block.items} />;
+    case "address_picker":
+      return <AddressPicker addresses={block.addresses} onSelect={onSelectAddress} onAddNew={onRequestNewAddress} />;
+    case "address_form":
+      return <AddressFormCard onCreated={onSelectAddress} />;
+    case "order_summary":
+      return (
+        <OrderSummaryCard
+          items={block.items}
+          address={block.address}
+          subtotal={block.subtotal}
+          shipping={block.shipping}
+          total={block.total}
+          confirmToken={block.confirmToken}
+          expiresAt={block.expiresAt}
+        />
+      );
     default:
       return null;
   }

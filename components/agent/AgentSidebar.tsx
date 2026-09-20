@@ -111,6 +111,44 @@ export function AgentSidebar() {
     ]);
   }
 
+  // Picking an address (saved or newly-created) previews the order directly — a client
+  // action, not a chat message, same principle as cart +/-.
+  async function selectAddress(addressId: string) {
+    const res = await fetch("/api/agent/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ addressId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setEntries((prev) => [
+        ...prev,
+        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't preview your order.", blocks: [] },
+      ]);
+      return;
+    }
+
+    const preview = await res.json();
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        role: "assistant",
+        content: "Here's your order summary!",
+        blocks: [{ type: "order_summary", ...preview }],
+      },
+    ]);
+  }
+
+  // "+ Add a new address" is pure UI — no server round trip needed to show the form.
+  function requestNewAddress() {
+    setEntries((prev) => [
+      ...prev,
+      { id: makeId(), role: "assistant", content: "Sure, add your address below.", blocks: [{ type: "address_form" }] },
+    ]);
+  }
+
   return (
     <>
       <button
@@ -152,7 +190,14 @@ export function AgentSidebar() {
                     spices — and I&apos;ll find it for you.
                   </div>
                 )}
-                <MessageList entries={entries} pending={pending} onQuickReply={send} onAddToCart={addToCart} />
+                <MessageList
+                  entries={entries}
+                  pending={pending}
+                  onQuickReply={send}
+                  onAddToCart={addToCart}
+                  onSelectAddress={selectAddress}
+                  onRequestNewAddress={requestNewAddress}
+                />
                 <ChatInput onSend={send} disabled={pending} />
               </>
             )}

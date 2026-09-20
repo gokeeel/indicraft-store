@@ -11,11 +11,15 @@ export function MessageList({
   pending,
   onQuickReply,
   onAddToCart,
+  onSelectAddress,
+  onRequestNewAddress,
 }: {
   entries: ChatEntry[];
   pending: boolean;
   onQuickReply: (value: string) => void;
   onAddToCart: (productId: string) => void;
+  onSelectAddress: (addressId: string) => void;
+  onRequestNewAddress: () => void;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +41,14 @@ export function MessageList({
                 <div className="rounded-lg border border-border bg-white px-3 py-2 text-sm">{entry.content}</div>
               )}
               {entry.blocks.map((block, i) => (
-                <BlockRenderer key={i} block={block} onQuickReply={onQuickReply} onAddToCart={onAddToCart} />
+                <BlockRenderer
+                  key={i}
+                  block={block}
+                  onQuickReply={onQuickReply}
+                  onAddToCart={onAddToCart}
+                  onSelectAddress={onSelectAddress}
+                  onRequestNewAddress={onRequestNewAddress}
+                />
               ))}
             </div>
           )}

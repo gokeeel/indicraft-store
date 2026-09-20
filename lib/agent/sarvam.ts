@@ -119,6 +119,9 @@ export class MockLLM implements SarvamLLM {
       if (lastMessage.name === "remove_cart_item") return { text: "Removed. Here's your cart now." };
       if (lastMessage.name === "update_cart_item") return { text: "Updated the quantity for you." };
       if (lastMessage.name === "view_cart") return { text: "Here's what's in your cart right now." };
+      if (lastMessage.name === "list_addresses") return { text: "Pick an address to ship to, or add a new one." };
+      if (lastMessage.name === "request_new_address") return { text: "Sure, add your address below." };
+      if (lastMessage.name === "preview_order") return { text: "Here's your order total!" };
       return { text: "Semma! Here's what I found. Want to see more or narrow it down?" };
     }
 
@@ -128,6 +131,9 @@ export class MockLLM implements SarvamLLM {
     const priceMatch = text.match(/(\d{3,6})/);
     const maxPrice = priceMatch ? Number(priceMatch[1]) : undefined;
 
+    if (/checkout|address/.test(text)) {
+      return { toolCalls: [{ id: "mock-1", name: "list_addresses", args: {} }] };
+    }
     if (/cart/.test(text)) {
       return { toolCalls: [{ id: "mock-1", name: "view_cart", args: {} }] };
     }
