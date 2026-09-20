@@ -1,6 +1,7 @@
 import { getCartSummary } from "@/lib/services/catalog";
 import { getAddressForUser } from "@/lib/services/addresses";
-import { createConfirmToken, hashCart } from "@/lib/agent/confirmToken";
+import { hashCartItems } from "@/lib/services/cart";
+import { createConfirmToken } from "@/lib/agent/confirmToken";
 
 export type OrderPreview = {
   items: Awaited<ReturnType<typeof getCartSummary>>["items"];
@@ -21,7 +22,7 @@ export async function buildOrderPreview(userId: string, addressId: string): Prom
   const cart = await getCartSummary(userId);
   if (cart.items.length === 0) return { ok: false, error: "Your cart is empty." };
 
-  const cartHash = hashCart(cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })));
+  const cartHash = hashCartItems(cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })));
   const { token, expiresAt } = createConfirmToken(userId, addressId, cartHash);
 
   return {

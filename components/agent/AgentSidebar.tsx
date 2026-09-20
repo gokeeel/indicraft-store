@@ -141,6 +141,43 @@ export function AgentSidebar() {
     ]);
   }
 
+  // Clicking Confirm in the order summary — the only path that can ever create an order.
+  async function confirmOrder(confirmToken: string) {
+    const res = await fetch("/api/agent/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmToken }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setEntries((prev) => [
+        ...prev,
+        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't confirm your order.", blocks: [] },
+      ]);
+      return;
+    }
+
+    const result = await res.json();
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        role: "assistant",
+        content: "Your order is created! It's awaiting payment.",
+        blocks: [
+          {
+            type: "payment_link",
+            orderId: result.orderId,
+            orderNumber: result.orderNumber,
+            amount: result.amount,
+            url: result.paymentUrl,
+          },
+        ],
+      },
+    ]);
+  }
+
   // "+ Add a new address" is pure UI — no server round trip needed to show the form.
   function requestNewAddress() {
     setEntries((prev) => [
@@ -197,6 +234,7 @@ export function AgentSidebar() {
                   onAddToCart={addToCart}
                   onSelectAddress={selectAddress}
                   onRequestNewAddress={requestNewAddress}
+                  onConfirmOrder={confirmOrder}
                 />
                 <ChatInput onSend={send} disabled={pending} />
               </>

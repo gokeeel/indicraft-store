@@ -13,7 +13,10 @@ export type Block =
     }
   | { type: "address_picker"; addresses: Extract<ToolResult, { tool: "list_addresses" }>["addresses"] }
   | { type: "address_form" }
-  | (Omit<Extract<ToolResult, { tool: "order_summary"; items: unknown }>, "tool"> & { type: "order_summary" });
+  | (Omit<Extract<ToolResult, { tool: "order_summary"; items: unknown }>, "tool"> & { type: "order_summary" })
+  // Produced client-side by AgentSidebar after a successful /api/agent/confirm call, not by a
+  // model tool — order creation is never something the model can trigger (PRD Section 6).
+  | { type: "payment_link"; orderId: string; orderNumber: string; amount: number; url: string };
 
 export function toBlocks(result: ToolResult): Block[] {
   if ("error" in result) return [];

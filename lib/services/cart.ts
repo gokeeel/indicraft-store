@@ -1,4 +1,13 @@
+import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+
+/** Deterministic identity for a cart's contents — used to detect the cart changing between an order preview and confirm. */
+export function hashCartItems(items: { productId: string; quantity: number }[]) {
+  const normalized = items
+    .map((i) => ({ productId: i.productId, quantity: i.quantity }))
+    .sort((a, b) => a.productId.localeCompare(b.productId));
+  return crypto.createHash("sha256").update(JSON.stringify(normalized)).digest("hex");
+}
 
 async function getOrCreateCart(userId: string) {
   const existing = await prisma.cart.findFirst({ where: { userId } });

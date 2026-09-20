@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import type { Money } from "@/lib/types";
@@ -13,7 +14,9 @@ export function OrderSummaryCard({
   subtotal,
   shipping,
   total,
+  confirmToken,
   expiresAt,
+  onConfirm,
 }: {
   items: OrderLine[];
   address: OrderAddress;
@@ -22,7 +25,14 @@ export function OrderSummaryCard({
   total: number;
   confirmToken: string;
   expiresAt: string;
+  onConfirm: (confirmToken: string) => Promise<void>;
 }) {
+  // Once submitted, stays disabled regardless of outcome — retrying goes through a fresh
+  // preview (new token), not a second click on this same card. Expiry itself isn't
+  // pre-checked here (that would call Date.now() during render); the server already
+  // rejects an expired token with a clear error message via onConfirm.
+  const [state, setState] = useState<"idle" | "confirming" | "done">("idle");
+
   return (
     <div className="mt-2 space-y-2 rounded-lg border border-border bg-white p-3 text-xs">
       <p className="text-sm font-semibold">Order Summary</p>
@@ -53,10 +63,21 @@ export function OrderSummaryCard({
           <span>{formatPrice(total)}</span>
         </div>
       </div>
-      <Button disabled className="w-full" size="sm">
-        Confirm Order (coming in the next step)
+      <Button
+        className="w-full"
+        size="sm"
+        disabled={state !== "idle"}
+        onClick={async () => {
+          setState("confirming");
+          await onConfirm(confirmToken);
+          setState("done");
+        }}
+      >
+        {state === "confirming" ? "Confirming..." : state === "done" ? "Order Confirmed" : "Confirm Order"}
       </Button>
-      <p className="text-[10px] text-muted">This preview expires at {new Date(expiresAt).toLocaleTimeString()}.</p>
+      {state === "idle" && (
+        <p className="text-[10px] text-muted">This preview expires at {new Date(expiresAt).toLocaleTimeString()}.</p>
+      )}
     </div>
   );
 }

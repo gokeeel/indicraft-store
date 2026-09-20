@@ -3,9 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getCart } from "@/lib/services/catalog";
-import { clearCart } from "@/lib/services/cart";
-import { cartSubtotal, computeCartTotals } from "@/lib/services/pricing";
+import { createOrderFromCart, OrderCreationError, isRetryableTransactionError } from "@/lib/services/orders";
 
 const schema = z.object({ addressId: z.string() });
 
@@ -33,35 +31,12 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const address = await prisma.address.findFirst({ where: { id: parsed.data.addressId, userId } });
-  if (!address) return NextResponse.json({ error: "Address not found" }, { status: 404 });
-
-  const cart = await getCart(userId);
-  if (!cart || cart.items.length === 0) return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
-
-  const { subtotal, shipping, tax, total } = computeCartTotals(cartSubtotal(cart.items));
-
-  const order = await prisma.order.create({
-    data: {
-      userId,
-      addressId: address.id,
-      subtotal,
-      shipping,
-      tax,
-      total,
-      status: "pending_payment",
-      items: {
-        create: cart.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.product.salePrice ?? item.product.price,
-        })),
-      },
-    },
-    include: { items: true },
-  });
-
-  await clearCart(userId);
-
-  return NextResponse.json(order, { status: 201 });
+  try {
+    const order = await createOrderFromCart(userId, parsed.data.addressId);
+    return NextResponse.json(order, { status: 201 });
+  } catch (err) {
+    if (err instanceof OrderCreationError) return NextResponse.json({ error: err.message }, { status: 400 });
+    if (isRetryableTransactionError(err)) return NextResponse.json({ error: "Please try again." }, { status: 409 });
+    throw err;
+  }
 }

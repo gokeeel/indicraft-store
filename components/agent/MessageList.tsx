@@ -13,6 +13,7 @@ export function MessageList({
   onAddToCart,
   onSelectAddress,
   onRequestNewAddress,
+  onConfirmOrder,
 }: {
   entries: ChatEntry[];
   pending: boolean;
@@ -20,6 +21,7 @@ export function MessageList({
   onAddToCart: (productId: string) => void;
   onSelectAddress: (addressId: string) => void;
   onRequestNewAddress: () => void;
+  onConfirmOrder: (confirmToken: string) => Promise<void>;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +50,7 @@ export function MessageList({
                   onAddToCart={onAddToCart}
                   onSelectAddress={onSelectAddress}
                   onRequestNewAddress={onRequestNewAddress}
+                  onConfirmOrder={onConfirmOrder}
                 />
               ))}
             </div>

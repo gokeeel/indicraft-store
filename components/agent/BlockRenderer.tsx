@@ -7,6 +7,7 @@ import { CartCard } from "@/components/agent/CartCard";
 import { AddressPicker } from "@/components/agent/AddressPicker";
 import { AddressFormCard } from "@/components/agent/AddressFormCard";
 import { OrderSummaryCard } from "@/components/agent/OrderSummaryCard";
+import { PaymentCard } from "@/components/agent/PaymentCard";
 import type { Block } from "@/lib/agent/blocks";
 
 export function BlockRenderer({
@@ -15,12 +16,14 @@ export function BlockRenderer({
   onAddToCart,
   onSelectAddress,
   onRequestNewAddress,
+  onConfirmOrder,
 }: {
   block: Block;
   onQuickReply: (value: string) => void;
   onAddToCart: (productId: string) => void;
   onSelectAddress: (addressId: string) => void;
   onRequestNewAddress: () => void;
+  onConfirmOrder: (confirmToken: string) => Promise<void>;
 }) {
   switch (block.type) {
     case "product_carousel":
@@ -45,8 +48,11 @@ export function BlockRenderer({
           total={block.total}
           confirmToken={block.confirmToken}
           expiresAt={block.expiresAt}
+          onConfirm={onConfirmOrder}
         />
       );
+    case "payment_link":
+      return <PaymentCard orderId={block.orderId} orderNumber={block.orderNumber} amount={block.amount} url={block.url} />;
     default:
       return null;
   }
