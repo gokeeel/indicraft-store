@@ -163,7 +163,7 @@ async function main() {
       await prisma.productImage.create({
         data: {
           productId: product.id,
-          url: `https://source.unsplash.com/600x600/?indian,handicraft,${encodeURIComponent(p.category)}`,
+          url: `https://picsum.photos/seed/${slug}/600/600`,
           altText: p.name,
           position: 0,
         },

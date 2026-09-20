@@ -42,7 +42,7 @@ export default async function HomePage() {
             >
               <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-full bg-black/5">
                 <Image
-                  src={`https://source.unsplash.com/200x200/?india,${encodeURIComponent(category.name)}`}
+                  src={`https://picsum.photos/seed/${category.slug}/200/200`}
                   alt={category.name}
                   fill
                   className="object-cover"
@@ -88,7 +88,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid items-center gap-6 md:grid-cols-2">
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <Image src="https://source.unsplash.com/800x600/?indian,artisan,craft" alt="Artisan at work" fill className="object-cover" />
+            <Image src="https://picsum.photos/seed/artisan-story/800/600" alt="Artisan at work" fill className="object-cover" />
           </div>
           <div>
             <h2 className="mb-3 text-2xl font-bold">Our Artisan Story</h2>
