@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { cartSubtotal, computeCartTotals } from "@/lib/services/pricing";
 
 export type ProductFilter = {
   category?: string;
@@ -101,4 +102,25 @@ export async function getCart(userId: string) {
     where: { userId },
     include: { items: { include: { product: { include: { images: true } } } } },
   });
+}
+
+export async function getCartSummary(userId: string) {
+  const cart = await getCart(userId);
+  const items = cart?.items ?? [];
+  const totals = computeCartTotals(cartSubtotal(items));
+
+  return {
+    items: items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      name: item.product.name,
+      slug: item.product.slug,
+      image: item.product.images[0]?.url ?? null,
+      price: item.product.price,
+      salePrice: item.product.salePrice,
+      quantity: item.quantity,
+      stock: item.product.stock,
+    })),
+    ...totals,
+  };
 }

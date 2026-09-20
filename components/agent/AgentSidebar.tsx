@@ -81,6 +81,36 @@ export function AgentSidebar() {
     ]);
   }
 
+  // "Add to cart" on a product card is a direct action, not a chat message — it hits the
+  // cart API straight away and drops a fresh cart card in, with no model round trip.
+  async function addToCart(productId: string) {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, quantity: 1 }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setEntries((prev) => [
+        ...prev,
+        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't add that to your cart.", blocks: [] },
+      ]);
+      return;
+    }
+
+    const cart = await fetch("/api/cart/summary").then((r) => r.json());
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        role: "assistant",
+        content: "Added to your cart!",
+        blocks: [{ type: "cart", items: cart.items, subtotal: cart.subtotal, shipping: cart.shipping, total: cart.total }],
+      },
+    ]);
+  }
+
   return (
     <>
       <button
@@ -122,7 +152,7 @@ export function AgentSidebar() {
                     spices — and I&apos;ll find it for you.
                   </div>
                 )}
-                <MessageList entries={entries} pending={pending} onQuickReply={send} />
+                <MessageList entries={entries} pending={pending} onQuickReply={send} onAddToCart={addToCart} />
                 <ChatInput onSend={send} disabled={pending} />
               </>
             )}

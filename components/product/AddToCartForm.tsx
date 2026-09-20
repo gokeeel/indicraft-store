@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 export function AddToCartForm({ productId, inStock }: { productId: string; inStock: boolean }) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "added" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
   async function handleAdd() {
@@ -22,6 +23,8 @@ export function AddToCartForm({ productId, inStock }: { productId: string; inSto
       return;
     }
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErrorMessage(data.error ?? "Something went wrong.");
       setStatus("error");
       return;
     }
@@ -42,7 +45,7 @@ export function AddToCartForm({ productId, inStock }: { productId: string; inSto
       <Button onClick={handleAdd} disabled={!inStock || status === "loading"}>
         {status === "added" ? "Added!" : "Add to Cart"}
       </Button>
-      {status === "error" && <span className="text-sm text-red-600">Something went wrong.</span>}
+      {status === "error" && <span className="text-sm text-red-600">{errorMessage}</span>}
     </div>
   );
 }

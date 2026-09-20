@@ -68,7 +68,19 @@ async function fetchWithRetry(url: string, init: RequestInit, outerSignal?: Abor
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url, { ...init, signal: controller.signal });
+    let res: Response;
+    try {
+      res = await fetch(url, { ...init, signal: controller.signal });
+    } catch (err) {
+      // Network-level failure (DNS, connect timeout, reset) — fetch throws before any
+      // Response exists, so this needs its own retry path distinct from HTTP error codes below.
+      if (attempt === 0 && !outerSignal?.aborted) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return fetchWithRetry(url, init, outerSignal, attempt + 1);
+      }
+      throw err;
+    }
+
     if (!res.ok && (res.status === 429 || res.status >= 500) && attempt === 0) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return fetchWithRetry(url, init, outerSignal, attempt + 1);
@@ -103,6 +115,10 @@ export class MockLLM implements SarvamLLM {
     // A tool result just came back — give a short scripted reply instead of looping again.
     if (lastMessage?.role === "tool") {
       if (lastMessage.name === "ask_user") return { text: "Take your pick!" };
+      if (lastMessage.name === "add_to_cart") return { text: "Added it to your cart! Want to keep browsing or checkout?" };
+      if (lastMessage.name === "remove_cart_item") return { text: "Removed. Here's your cart now." };
+      if (lastMessage.name === "update_cart_item") return { text: "Updated the quantity for you." };
+      if (lastMessage.name === "view_cart") return { text: "Here's what's in your cart right now." };
       return { text: "Semma! Here's what I found. Want to see more or narrow it down?" };
     }
 
@@ -112,6 +128,9 @@ export class MockLLM implements SarvamLLM {
     const priceMatch = text.match(/(\d{3,6})/);
     const maxPrice = priceMatch ? Number(priceMatch[1]) : undefined;
 
+    if (/cart/.test(text)) {
+      return { toolCalls: [{ id: "mock-1", name: "view_cart", args: {} }] };
+    }
     if (/gift|surprise|something nice|recommend/.test(text)) {
       return {
         toolCalls: [

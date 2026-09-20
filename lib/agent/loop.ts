@@ -35,7 +35,7 @@ export async function runAgentLoop(
         error: err instanceof Error ? err.message : "Tool execution failed",
       }));
 
-      blocks.push(...toBlocks(call.name, toolResult));
+      blocks.push(...toBlocks(toolResult));
       messages.push({
         role: "tool",
         tool_call_id: call.id,

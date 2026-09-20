@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { StockBadge } from "@/components/product/StockBadge";
 import type { Money } from "@/lib/types";
 
 type AgentProductDetail = {
+  id: string;
   slug: string;
   name: string;
   description: string;
@@ -19,7 +21,13 @@ type AgentProductDetail = {
   vendor: { storeName: string };
 };
 
-export function ProductDetailCard({ product }: { product: AgentProductDetail }) {
+export function ProductDetailCard({
+  product,
+  onAddToCart,
+}: {
+  product: AgentProductDetail;
+  onAddToCart: (productId: string) => void;
+}) {
   return (
     <div className="mt-2 rounded-lg border border-border bg-white p-3">
       <div className="flex gap-3">
@@ -45,13 +53,14 @@ export function ProductDetailCard({ product }: { product: AgentProductDetail }) 
         </p>
       )}
       <p className="mt-2 line-clamp-3 text-xs text-muted">{product.description}</p>
-      <Link
-        href={`/product/${product.slug}`}
-        target="_blank"
-        className="mt-2 inline-block text-xs font-medium text-primary hover:underline"
-      >
-        View full details →
-      </Link>
+      <div className="mt-2 flex items-center justify-between">
+        <Link href={`/product/${product.slug}`} target="_blank" className="text-xs font-medium text-primary hover:underline">
+          View full details →
+        </Link>
+        <Button type="button" size="sm" className="text-xs" disabled={product.stock === 0} onClick={() => onAddToCart(product.id)}>
+          Add to Cart
+        </Button>
+      </div>
     </div>
   );
 }

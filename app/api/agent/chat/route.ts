@@ -7,7 +7,10 @@ import { runAgentLoop } from "@/lib/agent/loop";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string().min(1).max(2000),
+  // Assistant turns can legitimately have empty text when the reply is carried entirely by
+  // blocks (e.g. a cart card after "add to cart"). Since the full history is resent every
+  // turn, requiring min(1) here would permanently 400 every later request once that happens.
+  content: z.string().max(2000),
 });
 
 const bodySchema = z.object({

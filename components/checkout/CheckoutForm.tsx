@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AddressForm, AddressFormValues } from "@/components/checkout/AddressForm";
 import { formatPrice } from "@/lib/utils";
+import { computeCartTotals } from "@/lib/services/pricing";
 
 type Address = { id: string; name: string; line1: string; city: string; state: string; zip: string };
-
-const TAX_RATE = 0.05;
-const FREE_SHIPPING_THRESHOLD = 999;
-const SHIPPING_FLAT_RATE = 99;
 
 export function CheckoutForm({ addresses, subtotal }: { addresses: Address[]; subtotal: number }) {
   const router = useRouter();
@@ -20,11 +17,7 @@ export function CheckoutForm({ addresses, subtotal }: { addresses: Address[]; su
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
 
-  const { shipping, tax, total } = useMemo(() => {
-    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
-    return { shipping, tax, total: subtotal + tax + shipping };
-  }, [subtotal]);
+  const { shipping, tax, total } = useMemo(() => computeCartTotals(subtotal), [subtotal]);
 
   async function saveNewAddress(values: AddressFormValues) {
     const res = await fetch("/api/addresses", {

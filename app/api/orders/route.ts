@@ -5,12 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/services/catalog";
 import { clearCart } from "@/lib/services/cart";
+import { cartSubtotal, computeCartTotals } from "@/lib/services/pricing";
 
 const schema = z.object({ addressId: z.string() });
-
-const TAX_RATE = 0.05;
-const FREE_SHIPPING_THRESHOLD = 999;
-const SHIPPING_FLAT_RATE = 99;
 
 async function requireUserId() {
   const session = await getServerSession(authOptions);
@@ -42,13 +39,7 @@ export async function POST(req: NextRequest) {
   const cart = await getCart(userId);
   if (!cart || cart.items.length === 0) return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
 
-  const subtotal = cart.items.reduce(
-    (sum, item) => sum + Number(item.product.salePrice ?? item.product.price) * item.quantity,
-    0
-  );
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
-  const total = subtotal + tax + shipping;
+  const { subtotal, shipping, tax, total } = computeCartTotals(cartSubtotal(cart.items));
 
   const order = await prisma.order.create({
     data: {

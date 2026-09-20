@@ -3,12 +3,11 @@ import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCart } from "@/lib/services/catalog";
+import { cartSubtotal, computeCartTotals } from "@/lib/services/pricing";
 import { Button } from "@/components/ui/button";
 import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { RemoveItemButton } from "@/components/cart/RemoveItemButton";
 import { formatPrice } from "@/lib/utils";
-
-const TAX_RATE = 0.05;
 
 export default async function CartPage() {
   const session = await getServerSession(authOptions);
@@ -39,12 +38,7 @@ export default async function CartPage() {
     );
   }
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.product.salePrice ?? item.product.price) * item.quantity,
-    0
-  );
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
+  const { subtotal, shipping, tax, total } = computeCartTotals(cartSubtotal(items));
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -74,6 +68,10 @@ export default async function CartPage() {
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
             <span>{formatPrice(subtotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Shipping</span>
+            <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span>Tax (5%)</span>

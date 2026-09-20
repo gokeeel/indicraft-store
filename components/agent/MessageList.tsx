@@ -10,10 +10,12 @@ export function MessageList({
   entries,
   pending,
   onQuickReply,
+  onAddToCart,
 }: {
   entries: ChatEntry[];
   pending: boolean;
   onQuickReply: (value: string) => void;
+  onAddToCart: (productId: string) => void;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +37,7 @@ export function MessageList({
                 <div className="rounded-lg border border-border bg-white px-3 py-2 text-sm">{entry.content}</div>
               )}
               {entry.blocks.map((block, i) => (
-                <BlockRenderer key={i} block={block} onQuickReply={onQuickReply} />
+                <BlockRenderer key={i} block={block} onQuickReply={onQuickReply} onAddToCart={onAddToCart} />
               ))}
             </div>
           )}

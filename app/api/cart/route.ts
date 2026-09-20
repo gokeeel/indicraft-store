@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
   const parsed = addSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const item = await addToCart(userId, parsed.data.productId, parsed.data.quantity);
-  return NextResponse.json(item, { status: 201 });
+  const result = await addToCart(userId, parsed.data.productId, parsed.data.quantity);
+  if (!result.ok) {
+    const status = result.reason === "not_found" ? 404 : 409;
+    const message =
+      result.reason === "not_found"
+        ? "Product not found"
+        : `Only ${result.available} left in stock`;
+    return NextResponse.json({ error: message, reason: result.reason, available: result.available }, { status });
+  }
+  return NextResponse.json(result.item, { status: 201 });
 }
