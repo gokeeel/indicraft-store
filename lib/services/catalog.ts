@@ -7,6 +7,7 @@ export type ProductFilter = {
   region?: string;
   minPrice?: number;
   maxPrice?: number;
+  q?: string;
 };
 
 export type ProductSort = "price_asc" | "price_desc" | "newest";
@@ -25,6 +26,15 @@ export async function getProducts(
     where.price = {};
     if (filter.minPrice != null) where.price.gte = filter.minPrice;
     if (filter.maxPrice != null) where.price.lte = filter.maxPrice;
+  }
+  if (filter.q) {
+    const q = filter.q;
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { material: { contains: q, mode: "insensitive" } },
+      { region: { contains: q, mode: "insensitive" } },
+    ];
   }
 
   const orderBy: Prisma.ProductOrderByWithRelationInput =
@@ -49,6 +59,27 @@ export async function getProductBySlug(slug: string) {
     where: { slug },
     include: { images: true, category: true, vendor: true },
   });
+}
+
+export async function getProductReviews(productId: string) {
+  const [reviews, agg] = await Promise.all([
+    prisma.review.findMany({
+      where: { productId },
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true } } },
+    }),
+    prisma.review.aggregate({ where: { productId }, _avg: { rating: true }, _count: true }),
+  ]);
+  return { reviews, average: agg._avg.rating ?? 0, count: agg._count };
+}
+
+export async function userHasPurchased(userId: string, productId: string) {
+  // Payment isn't wired up yet, so every order currently stays "pending_payment" —
+  // gate on order existence instead of a paid status until real payment lands.
+  const count = await prisma.orderItem.count({
+    where: { productId, order: { userId } },
+  });
+  return count > 0;
 }
 
 export async function getRelatedProducts(categoryId: string, excludeId: string, take = 4) {

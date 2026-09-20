@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/services/catalog";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 
-const TAX_RATE = 0.05;
-
 export default async function CheckoutPage() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -24,13 +22,11 @@ export default async function CheckoutPage() {
     (sum, item) => sum + Number(item.product.salePrice ?? item.product.price) * item.quantity,
     0
   );
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-6 text-xl font-bold">Checkout</h1>
-      <CheckoutForm addresses={addresses} subtotal={subtotal} tax={tax} total={total} />
+      <CheckoutForm addresses={addresses} subtotal={subtotal} />
     </div>
   );
 }

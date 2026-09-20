@@ -13,6 +13,7 @@ export function SortSelect() {
       onValueChange={(v) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("sort", v);
+        params.delete("page");
         router.push(`/shop?${params.toString()}`);
       }}
     >

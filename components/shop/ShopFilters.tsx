@@ -28,6 +28,7 @@ export function ShopFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    params.delete("page");
     router.push(`/shop?${params.toString()}`);
   }
 
@@ -71,6 +72,7 @@ export function ShopFilters({
             const params = new URLSearchParams(searchParams.toString());
             params.set("minPrice", String(v[0]));
             params.set("maxPrice", String(v[1]));
+            params.delete("page");
             router.push(`/shop?${params.toString()}`);
           }}
         />

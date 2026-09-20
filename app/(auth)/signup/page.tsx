@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,7 +13,6 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [role, setRole] = useState<"customer" | "vendor">("customer");
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +25,7 @@ export default function SignupPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, password }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -61,22 +59,6 @@ export default function SignupPage() {
           onChange={(e) => setConfirm(e.target.value)}
         />
 
-        <div className="flex gap-2">
-          {(["customer", "vendor"] as const).map((r) => (
-            <button
-              type="button"
-              key={r}
-              onClick={() => setRole(r)}
-              className={cn(
-                "flex-1 rounded-md border border-border py-2 text-sm capitalize",
-                role === r && "border-primary bg-primary/10 text-primary"
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" className="w-full">
           Sign Up
@@ -87,6 +69,12 @@ export default function SignupPage() {
         <Link href="/login" className="text-primary hover:underline">
           Log in
         </Link>
+      </p>
+      <p className="mt-2 text-xs text-muted">
+        Want to sell on Indicraft?{" "}
+        <a href="mailto:vendors@indicraft.test" className="text-primary hover:underline">
+          Apply as a vendor
+        </a>
       </p>
     </div>
   );

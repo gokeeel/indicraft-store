@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,23 +9,46 @@ import { formatPrice } from "@/lib/utils";
 
 type Address = { id: string; name: string; line1: string; city: string; state: string; zip: string };
 
-export function CheckoutForm({
-  addresses,
-  subtotal,
-  tax,
-  total,
-}: {
-  addresses: Address[];
-  subtotal: number;
-  tax: number;
-  total: number;
-}) {
+const TAX_RATE = 0.05;
+const FREE_SHIPPING_THRESHOLD = 999;
+const SHIPPING_FLAT_RATE = 99;
+
+export function CheckoutForm({ addresses, subtotal }: { addresses: Address[]; subtotal: number }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(addresses[0]?.id ?? null);
   const [addingNew, setAddingNew] = useState(addresses.length === 0);
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
+
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; percentOff: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
+  const { discount, shipping, tax, total } = useMemo(() => {
+    const discount = coupon ? Math.round(subtotal * (coupon.percentOff / 100) * 100) / 100 : 0;
+    const taxable = subtotal - discount;
+    const shipping = taxable >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
+    const tax = Math.round(taxable * TAX_RATE * 100) / 100;
+    return { discount, shipping, tax, total: taxable + tax + shipping };
+  }, [subtotal, coupon]);
+
+  async function applyCoupon() {
+    if (!couponInput.trim()) return;
+    setCheckingCoupon(true);
+    setCouponError("");
+    const res = await fetch(`/api/coupons/validate?code=${encodeURIComponent(couponInput.trim())}`);
+    setCheckingCoupon(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setCouponError(data.error ?? "Invalid coupon code.");
+      setCoupon(null);
+      return;
+    }
+    const data = await res.json();
+    setCoupon(data);
+  }
 
   async function saveNewAddress(values: AddressFormValues) {
     const res = await fetch("/api/addresses", {
@@ -51,7 +74,7 @@ export function CheckoutForm({
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addressId: selectedId }),
+      body: JSON.stringify({ addressId: selectedId, couponCode: coupon?.code }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -111,12 +134,17 @@ export function CheckoutForm({
         <section>
           <h2 className="mb-2 font-semibold">Coupon</h2>
           <div className="flex gap-2">
-            <Input placeholder="Coupon code" disabled />
-            <Button variant="outline" disabled>
-              Apply
+            <Input
+              placeholder="Coupon code"
+              value={couponInput}
+              onChange={(e) => setCouponInput(e.target.value)}
+            />
+            <Button type="button" variant="outline" onClick={applyCoupon} disabled={checkingCoupon}>
+              {checkingCoupon ? "Checking..." : "Apply"}
             </Button>
           </div>
-          <p className="mt-1 text-xs text-muted">Coming soon.</p>
+          {coupon && <p className="mt-1 text-xs text-green-700">{coupon.code} applied — {coupon.percentOff}% off</p>}
+          {couponError && <p className="mt-1 text-xs text-red-600">{couponError}</p>}
         </section>
       </div>
 
@@ -126,8 +154,18 @@ export function CheckoutForm({
           <span>Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
+        {discount > 0 && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>Discount</span>
+            <span>-{formatPrice(discount)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm">
-          <span>Tax</span>
+          <span>Shipping</span>
+          <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Tax (5%)</span>
           <span>{formatPrice(tax)}</span>
         </div>
         <div className="flex justify-between border-t border-border pt-2 font-semibold">

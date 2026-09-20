@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       region: params.get("region") ?? undefined,
       minPrice: params.get("minPrice") ? Number(params.get("minPrice")) : undefined,
       maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : undefined,
+      q: params.get("q") ?? undefined,
     },
     sort,
     params.get("page") ? Number(params.get("page")) : 1

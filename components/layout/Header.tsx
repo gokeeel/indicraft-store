@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Search, User, ShoppingBag } from "lucide-react";
+import { User, ShoppingBag, Heart } from "lucide-react";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { SearchBar } from "@/components/layout/SearchBar";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
@@ -27,16 +28,13 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
           ))}
         </nav>
 
-        <div className="ml-auto hidden max-w-sm flex-1 items-center rounded-md border border-border px-3 md:flex">
-          <Search className="h-4 w-4 opacity-50" />
-          <input
-            type="search"
-            placeholder="Search handcrafted products..."
-            className="w-full bg-transparent px-2 py-2 text-sm outline-none"
-          />
-        </div>
+        <SearchBar className="ml-auto hidden max-w-sm flex-1 items-center rounded-md border border-border px-3 md:flex" />
 
-        <Link href="/account/orders" className="ml-auto md:ml-4 p-2 hover:text-primary" aria-label="Account">
+        <Link href="/account/wishlist" className="ml-auto p-2 hover:text-primary md:ml-4" aria-label="Wishlist">
+          <Heart className="h-5 w-5" />
+        </Link>
+
+        <Link href="/account/orders" className="p-2 hover:text-primary" aria-label="Account">
           <User className="h-5 w-5" />
         </Link>
 

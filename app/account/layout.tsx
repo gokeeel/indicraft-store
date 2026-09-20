@@ -22,6 +22,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
           <Link href="/account/addresses" className="block hover:text-primary">
             Addresses
           </Link>
+          <Link href="/account/wishlist" className="block hover:text-primary">
+            Wishlist
+          </Link>
         </aside>
         <div className="flex-1">{children}</div>
       </main>

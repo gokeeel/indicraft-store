@@ -36,6 +36,8 @@ model User {
   orders    Order[]
   carts     Cart[]
   addresses Address[]
+  wishlist  WishlistItem[]
+  reviews   Review[]
 }
 
 model Vendor {
@@ -76,9 +78,11 @@ model Product {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
-  images     ProductImage[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
+  images      ProductImage[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  wishlistedBy WishlistItem[]
+  reviews     Review[]
 }
 
 model ProductImage {
@@ -112,17 +116,20 @@ model CartItem {
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  user      User        @relation(fields: [userId], references: [id])
-  userId    String
-  address   Address     @relation(fields: [addressId], references: [id])
-  addressId String
-  status    OrderStatus @default(pending_payment)
-  subtotal  Decimal     @db.Decimal(10, 2)
-  tax       Decimal     @db.Decimal(10, 2)
-  total     Decimal     @db.Decimal(10, 2)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  user       User        @relation(fields: [userId], references: [id])
+  userId     String
+  address    Address     @relation(fields: [addressId], references: [id])
+  addressId  String
+  status     OrderStatus @default(pending_payment)
+  subtotal   Decimal     @db.Decimal(10, 2)
+  discount   Decimal     @default(0) @db.Decimal(10, 2)
+  couponCode String?
+  shipping   Decimal     @default(0) @db.Decimal(10, 2)
+  tax        Decimal     @db.Decimal(10, 2)
+  total      Decimal     @db.Decimal(10, 2)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   items   OrderItem[]
   payment Payment?
@@ -169,4 +176,28 @@ model Address {
   isDefault Boolean  @default(false)
 
   orders Order[]
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }

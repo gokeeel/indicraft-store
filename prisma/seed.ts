@@ -171,7 +171,18 @@ async function main() {
     }
   }
 
-  console.log(`Seeded ${categories.length} categories and ${products.length} products.`);
+  await prisma.coupon.upsert({
+    where: { code: "WELCOME10" },
+    update: {},
+    create: { code: "WELCOME10", percentOff: 10, active: true },
+  });
+  await prisma.coupon.upsert({
+    where: { code: "FESTIVE25" },
+    update: {},
+    create: { code: "FESTIVE25", percentOff: 25, active: true },
+  });
+
+  console.log(`Seeded ${categories.length} categories, ${products.length} products, and 2 coupons.`);
 }
 
 main()
