@@ -13,11 +13,16 @@ export type ToolSchema = {
 
 export type LLMToolCall = { id: string; name: string; args: unknown };
 
+export type StreamEvent = { type: "text"; delta: string } | { type: "tool_calls"; toolCalls: LLMToolCall[] };
+
 export interface SarvamLLM {
   chat(input: { messages: Msg[]; tools: ToolSchema[]; signal?: AbortSignal }): Promise<{
     text?: string;
     toolCalls?: LLMToolCall[];
   }>;
+  /** Same call, but yields text deltas as they arrive; ends with a tool_calls event
+   *  instead if the model decided to call a tool rather than reply with text. */
+  chatStream(input: { messages: Msg[]; tools: ToolSchema[]; signal?: AbortSignal }): AsyncGenerator<StreamEvent>;
 }
 
 const SARVAM_BASE_URL = "https://api.sarvam.ai";
@@ -59,7 +64,95 @@ export class SarvamHttpLLM implements SarvamLLM {
 
     return { text: choice.content ?? undefined, toolCalls };
   }
+
+  async *chatStream({
+    messages,
+    tools,
+    signal,
+  }: {
+    messages: Msg[];
+    tools: ToolSchema[];
+    signal?: AbortSignal;
+  }): AsyncGenerator<StreamEvent> {
+    const res = await fetchWithRetry(
+      `${SARVAM_BASE_URL}/v1/chat/completions`,
+      {
+        method: "POST",
+        headers: { "api-subscription-key": this.apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: this.model,
+          messages,
+          tools,
+          tool_choice: "auto",
+          max_tokens: 600,
+          temperature: 0.3,
+          stream: true,
+        }),
+      },
+      signal
+    );
+
+    if (!res.body) throw new Error("Sarvam: streaming response had no body");
+
+    // OpenAI-compatible SSE: lines of "data: {...}", ending in "data: [DONE]". Tool call
+    // arguments arrive as string fragments per index and must be concatenated across chunks.
+    const toolCallBuffers = new Map<number, { id?: string; name?: string; args: string }>();
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const payload = trimmed.slice(5).trim();
+          // Sarvam may keep the connection open briefly after the final chunk; stop reading
+          // as soon as we see the sentinel instead of waiting on reader.read() to resolve done.
+          if (payload === "[DONE]") break outer;
+
+          const chunk = safeJsonParse(payload) as {
+            choices?: [{ delta?: { content?: string; tool_calls?: DeltaToolCall[] } }];
+          };
+          const delta = chunk.choices?.[0]?.delta;
+          if (!delta) continue;
+
+          if (delta.content) yield { type: "text", delta: delta.content };
+
+          for (const tc of delta.tool_calls ?? []) {
+            const existing = toolCallBuffers.get(tc.index) ?? { args: "" };
+            if (tc.id) existing.id = tc.id;
+            if (tc.function?.name) existing.name = (existing.name ?? "") + tc.function.name;
+            if (tc.function?.arguments) existing.args += tc.function.arguments;
+            toolCallBuffers.set(tc.index, existing);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    if (toolCallBuffers.size > 0) {
+      const toolCalls = [...toolCallBuffers.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, tc]) => ({
+          id: tc.id ?? `call-${crypto.randomUUID()}`,
+          name: tc.name ?? "",
+          args: safeJsonParse(tc.args),
+        }));
+      yield { type: "tool_calls", toolCalls };
+    }
+  }
 }
+
+type DeltaToolCall = { index: number; id?: string; function?: { name?: string; arguments?: string } };
 
 async function fetchWithRetry(url: string, init: RequestInit, outerSignal?: AbortSignal, attempt = 0): Promise<Response> {
   const controller = new AbortController();
@@ -110,6 +203,24 @@ function safeJsonParse(raw: string): unknown {
  */
 export class MockLLM implements SarvamLLM {
   async chat({ messages }: { messages: Msg[]; tools: ToolSchema[] }) {
+    return this.decide(messages);
+  }
+
+  async *chatStream({ messages }: { messages: Msg[]; tools: ToolSchema[] }): AsyncGenerator<StreamEvent> {
+    const result = this.decide(messages);
+    if (result.toolCalls) {
+      yield { type: "tool_calls", toolCalls: result.toolCalls };
+      return;
+    }
+    // Simulate token-by-token arrival so the UI's streaming path is exercised in dev too.
+    const words = (result.text ?? "").split(" ");
+    for (const word of words) {
+      yield { type: "text", delta: word + " " };
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  private decide(messages: Msg[]): { text?: string; toolCalls?: LLMToolCall[] } {
     const lastMessage = messages[messages.length - 1];
 
     // A tool result just came back — give a short scripted reply instead of looping again.

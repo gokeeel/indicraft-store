@@ -9,6 +9,7 @@ import { MessageList } from "@/components/agent/MessageList";
 import { ChatInput } from "@/components/agent/ChatInput";
 import { Button } from "@/components/ui/button";
 import type { ChatEntry } from "@/lib/agent/client-types";
+import type { Block } from "@/lib/agent/blocks";
 
 const STORAGE_KEY = "venmathi-chat";
 
@@ -42,6 +43,16 @@ export function AgentSidebar() {
     }
   }, [entries]);
 
+  // Escape closes the panel, matching standard dialog/drawer behavior.
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, setOpen]);
+
   async function send(text: string) {
     const userEntry: ChatEntry = { id: makeId(), role: "user", content: text };
     const nextEntries = [...entries, userEntry];
@@ -64,21 +75,70 @@ export function AgentSidebar() {
       return;
     }
 
-    setPending(false);
-
-    if (!res.ok) {
+    if (!res.ok || !res.body) {
+      setPending(false);
+      const data = await res.json().catch(() => ({}));
       setEntries((prev) => [
         ...prev,
-        { id: makeId(), role: "assistant", content: "Oops, something glitched on my side. Try again?", blocks: [] },
+        {
+          id: makeId(),
+          role: "assistant",
+          content: data.error ?? "Oops, something glitched on my side. Try again?",
+          blocks: [],
+        },
       ]);
       return;
     }
 
-    const data = await res.json();
-    setEntries((prev) => [
-      ...prev,
-      { id: makeId(), role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [] },
-    ]);
+    // Streamed as newline-delimited JSON (see app/api/agent/chat/route.ts): text deltas append
+    // to a fresh assistant entry as they arrive, blocks land once tool results are ready.
+    const assistantId = makeId();
+    let started = false;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const chunk = JSON.parse(line) as { type: "text"; delta: string } | { type: "blocks"; blocks: Block[] };
+
+          if (!started) {
+            started = true;
+            setPending(false);
+            setEntries((prev) => [...prev, { id: assistantId, role: "assistant", content: "", blocks: [] }]);
+          }
+
+          if (chunk.type === "text") {
+            setEntries((prev) =>
+              prev.map((e) =>
+                e.id === assistantId && e.role === "assistant" ? { ...e, content: e.content + chunk.delta } : e
+              )
+            );
+          } else {
+            setEntries((prev) =>
+              prev.map((e) =>
+                e.id === assistantId && e.role === "assistant"
+                  ? { ...e, blocks: chunk.blocks }
+                  : e
+              )
+            );
+          }
+        }
+      }
+    } finally {
+      setPending(false);
+      if (!started) {
+        setEntries((prev) => [...prev, { id: assistantId, role: "assistant", content: "", blocks: [] }]);
+      }
+    }
   }
 
   // "Add to cart" on a product card is a direct action, not a chat message — it hits the
@@ -200,7 +260,11 @@ export function AgentSidebar() {
       {open && (
         <>
           <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
-          <aside className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-[#f7f5f2] shadow-xl md:w-[400px] md:border-l md:border-border">
+          <aside
+            role="dialog"
+            aria-label="Venmathi, Indicraft shopping assistant"
+            className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-[#f7f5f2] shadow-xl md:w-[400px] md:border-l md:border-border"
+          >
             <div className="flex items-center justify-between border-b border-border bg-white px-4 py-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
