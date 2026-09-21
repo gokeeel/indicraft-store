@@ -6,10 +6,23 @@ import { formatPrice } from "@/lib/utils";
 
 const STATUS_STEPS = ["paid", "processing", "shipped", "delivered"];
 
-export default async function OrdersPage() {
+const PAYMENT_BANNERS: Record<string, { text: string; tone: "success" | "error" }> = {
+  success: { text: "Payment successful — thank you!", tone: "success" },
+  invalid: { text: "That payment link couldn't be verified. If you were charged, contact support.", tone: "error" },
+  not_found: { text: "We couldn't find that order.", tone: "error" },
+};
+
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ payment?: string }>;
+}) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/login");
+
+  const { payment } = await searchParams;
+  const banner = payment ? PAYMENT_BANNERS[payment] : undefined;
 
   const orders = await prisma.order.findMany({
     where: { userId },
@@ -23,6 +36,15 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      {banner && (
+        <p
+          className={`rounded-md px-3 py-2 text-sm ${
+            banner.tone === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}
+        >
+          {banner.text}
+        </p>
+      )}
       <h1 className="text-xl font-bold">Your Orders</h1>
       {orders.map((order) => (
         <div key={order.id} className="rounded-lg border border-border bg-white p-4">
