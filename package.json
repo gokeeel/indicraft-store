@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts"
@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@prisma/client": "^6.19.3",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-select": "^2.3.7",
@@ -30,7 +31,8 @@
     "react-dom": "19.2.8",
     "react-hook-form": "^7.88.0",
     "tailwind-merge": "^3.7.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zod4": "npm:zod@^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
