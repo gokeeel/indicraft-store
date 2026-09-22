@@ -33,7 +33,9 @@ export function ChatInput({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Ask Venmathi..."
-        disabled={disabled}
+        // Not disabled while pending: a disabled input loses focus the instant it's set (the
+        // browser blurs it for you), which kicked the user out of the box after every send.
+        // Submission is still blocked below via the Send button's disabled state.
         aria-label="Message Venmathi"
       />
       <VoiceButton onAudioCaptured={onSendVoice} isProcessing={!!isProcessingVoice} disabled={disabled} />

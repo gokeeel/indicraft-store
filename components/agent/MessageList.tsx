@@ -37,7 +37,9 @@ export function MessageList({
   }, [entries, pending]);
 
   return (
-    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4" aria-live="polite">
+    // overscroll-contain stops scroll chaining: without it, scrolling past this panel's own
+    // top/bottom hands the gesture to the page behind it, so the storefront scrolls too.
+    <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" aria-live="polite">
       {entries.map((entry) => (
         <div key={entry.id} className={cn("flex", entry.role === "user" ? "justify-end" : "justify-start")}>
           {entry.role === "user" ? (
