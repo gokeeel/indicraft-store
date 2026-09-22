@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { X, Sparkles } from "lucide-react";
 import { useAgentPanel } from "@/lib/agent/context";
@@ -27,9 +28,18 @@ function errorText(data: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+// The header's cart count is server-rendered per page load, not client state -- without this,
+// nothing in the agent panel (text, voice, or direct card actions) ever updates it, so the
+// badge sits stale until the user does a hard navigation (Section 21.5: cart count must update
+// when the agent adds an item).
+function hasCartBlock(blocks: Block[]): boolean {
+  return blocks.some((b) => b.type === "cart" || b.type === "payment_link");
+}
+
 export function AgentSidebar() {
   const { open, setOpen, toggle, pendingMessage, clearPendingMessage } = useAgentPanel();
   const { data: session, status } = useSession();
+  const router = useRouter();
   // Lazy init reads sessionStorage synchronously on the client. Safe from hydration
   // mismatches because the panel starts closed, so this content isn't in the initial DOM.
   const [entries, setEntries] = useState<ChatEntry[]>(() => {
@@ -151,6 +161,7 @@ export function AgentSidebar() {
                   : e
               )
             );
+            if (hasCartBlock(chunk.blocks)) router.refresh();
           }
         }
       }
@@ -200,6 +211,7 @@ export function AgentSidebar() {
       { id: makeId(), role: "user", content: data.userTranscript },
       { id: makeId(), role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [], audio: data.assistantAudio ?? undefined },
     ]);
+    if (hasCartBlock(data.blocks ?? [])) router.refresh();
 
     if (data.assistantAudio) {
       new Audio(`data:audio/mp3;base64,${data.assistantAudio}`).play().catch(() => {});
@@ -234,6 +246,7 @@ export function AgentSidebar() {
         blocks: [{ type: "cart", items: cart.items, subtotal: cart.subtotal, shipping: cart.shipping, total: cart.total }],
       },
     ]);
+    router.refresh();
   }
 
   // Picking an address (saved or newly-created) previews the order directly — a client
@@ -301,6 +314,7 @@ export function AgentSidebar() {
         ],
       },
     ]);
+    router.refresh(); // order creation clears the cart server-side; reflect that in the header
   }
 
   // "+ Add a new address" is pure UI — no server round trip needed to show the form.
