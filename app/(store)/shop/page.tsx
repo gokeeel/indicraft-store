@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { ActiveFilters } from "@/components/shop/ActiveFilters";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { Pagination } from "@/components/shop/Pagination";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getCategories, getFilterOptions, getProducts, ProductSort } from "@/lib/services/catalog";
+import { getCategories, getFilterOptions, getProducts, getWishlistedProductIds, ProductSort } from "@/lib/services/catalog";
 
 export async function generateMetadata({
   searchParams,
@@ -25,10 +27,13 @@ export default async function ShopPage({
 }) {
   const params = await searchParams;
   const page = params.page ? Math.max(1, Number(params.page)) : 1;
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const [categories, filterOptions, result] = await Promise.all([
+  const [categories, filterOptions, wishlisted, result] = await Promise.all([
     getCategories(),
     getFilterOptions(),
+    getWishlistedProductIds(userId),
     getProducts(
       {
         category: params.category,
@@ -71,7 +76,7 @@ export default async function ShopPage({
           {result.items.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {result.items.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} wishlisted={wishlisted.has(product.id)} />
               ))}
             </div>
           ) : (

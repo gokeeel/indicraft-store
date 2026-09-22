@@ -11,7 +11,7 @@ import { WishlistButton } from "@/components/product/WishlistButton";
 import { Reviews } from "@/components/product/Reviews";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getProductBySlug, getRelatedProducts, getProductReviews } from "@/lib/services/catalog";
+import { getProductBySlug, getRelatedProducts, getProductReviews, getWishlistedProductIds } from "@/lib/services/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -36,12 +36,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const [related, { reviews, average, count }, wishlisted] = await Promise.all([
+  const [related, { reviews, average, count }, wishlisted, relatedWishlisted] = await Promise.all([
     getRelatedProducts(product.categoryId, product.id),
     getProductReviews(product.id),
     userId
       ? prisma.wishlistItem.findUnique({ where: { userId_productId: { userId, productId: product.id } } })
       : null,
+    getWishlistedProductIds(userId),
   ]);
 
   return (
@@ -123,7 +124,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <h2 className="mb-6 text-xl font-bold">Related Products</h2>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} wishlisted={relatedWishlisted.has(p.id)} />
             ))}
           </div>
         </section>

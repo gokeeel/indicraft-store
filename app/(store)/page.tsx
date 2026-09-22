@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product/ProductCard";
 import { AskVenmathiButton } from "@/components/agent/AskVenmathiButton";
-import { getCategories, getProducts } from "@/lib/services/catalog";
+import { getCategories, getProducts, getWishlistedProductIds } from "@/lib/services/catalog";
 
 const QUICK_PROMPTS = [
   "Find me a handmade gift under ₹1,500",
@@ -19,10 +21,14 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [categories, featured, dealResult] = await Promise.all([
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+
+  const [categories, featured, dealResult, wishlisted] = await Promise.all([
     getCategories(),
     getProducts({}, "newest", 1, 4),
     getProducts({}, "price_asc", 1, 1),
+    getWishlistedProductIds(userId),
   ]);
   const deal = dealResult.items[0];
 
@@ -86,7 +92,7 @@ export default async function HomePage() {
         <h2 className="mb-6 text-2xl font-bold">Featured Products</h2>
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {featured.items.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} wishlisted={wishlisted.has(product.id)} />
           ))}
         </div>
       </section>

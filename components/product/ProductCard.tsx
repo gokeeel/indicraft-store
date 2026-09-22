@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { PriceDisplay } from "@/components/product/PriceDisplay";
+import { WishlistButton } from "@/components/product/WishlistButton";
+import { QuickAddButton } from "@/components/product/QuickAddButton";
 import { ProductSummary } from "@/lib/types";
 
-export function ProductCard({ product }: { product: ProductSummary }) {
+export function ProductCard({ product, wishlisted = false }: { product: ProductSummary; wishlisted?: boolean }) {
   const image = product.images[0];
   return (
     <Link href={`/product/${product.slug}`} className="group block">
@@ -20,11 +22,13 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium">
           {product.category.name}
         </span>
+        <WishlistButton productId={product.id} initialSaved={wishlisted} compact />
         {product.stock <= 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70">
             <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white">Sold Out</span>
           </div>
         )}
+        <QuickAddButton productId={product.id} inStock={product.stock > 0} />
       </div>
       <div className="mt-2">
         <h3 className="line-clamp-1 text-sm font-medium">{product.name}</h3>

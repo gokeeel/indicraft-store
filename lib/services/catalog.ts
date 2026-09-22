@@ -119,6 +119,12 @@ export async function getFilterOptions() {
   };
 }
 
+export async function getWishlistedProductIds(userId: string | undefined): Promise<Set<string>> {
+  if (!userId) return new Set();
+  const items = await prisma.wishlistItem.findMany({ where: { userId }, select: { productId: true } });
+  return new Set(items.map((i) => i.productId));
+}
+
 export async function getCart(userId: string) {
   return prisma.cart.findFirst({
     where: { userId },
