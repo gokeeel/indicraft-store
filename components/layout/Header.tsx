@@ -39,7 +39,7 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
           <Heart className="h-5 w-5" />
         </Link>
 
-        <Link href="/account/orders" className="p-2 hover:text-primary" aria-label="Account">
+        <Link href="/account" className="p-2 hover:text-primary" aria-label="Account">
           <User className="h-5 w-5" />
         </Link>
 

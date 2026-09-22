@@ -16,6 +16,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
       <Header cartCount={cartCount} />
       <main className="mx-auto flex max-w-7xl flex-1 gap-8 px-4 py-8">
         <aside className="w-48 shrink-0 space-y-2 text-sm">
+          <Link href="/account" className="block hover:text-primary">
+            Overview
+          </Link>
           <Link href="/account/orders" className="block hover:text-primary">
             Orders
           </Link>
