@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getProducts, getProductById, getCartSummary } from "@/lib/services/catalog";
+import { getProducts, getProductById, getCartSummary, getWishlist, addToWishlist, removeFromWishlist } from "@/lib/services/catalog";
 import { addToCart, updateCartItemQuantity, removeFromCart } from "@/lib/services/cart";
 import { getAddresses } from "@/lib/services/addresses";
 import { buildOrderPreview, type OrderPreview } from "@/lib/agent/preview";
@@ -44,6 +44,10 @@ const removeCartItemArgs = z.object({
 
 const previewOrderArgs = z.object({
   addressId: z.string(),
+});
+
+const wishlistProductArgs = z.object({
+  productId: z.string(),
 });
 
 // Sarvam's tool-calling API is OpenAI-compatible: {type:"function", function:{name, description, parameters}}
@@ -182,6 +186,38 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
   {
     type: "function",
     function: {
+      name: "view_wishlist",
+      description: "Get the user's saved/wishlisted products. Use for 'show my wishlist' or 'what have I saved'.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_to_wishlist",
+      description: "Save a product to the user's wishlist for later. Use for 'save this for later' or 'add to my wishlist'.",
+      parameters: {
+        type: "object",
+        properties: { productId: { type: "string" } },
+        required: ["productId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_from_wishlist",
+      description: "Remove a product from the user's wishlist.",
+      parameters: {
+        type: "object",
+        properties: { productId: { type: "string" } },
+        required: ["productId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "track_orders",
       description:
         "Get the user's recent orders with their current status (pending payment, paid, processing, shipped, delivered, etc.). Use this whenever they ask about an existing order — e.g. 'where is my order', 'has it shipped', 'did my payment go through'.",
@@ -204,6 +240,8 @@ export type ToolResult =
   | ({ tool: "order_summary" } & OrderPreview)
   | { tool: "order_summary"; error: string }
   | { tool: "orders"; orders: Awaited<ReturnType<typeof getRecentOrders>> }
+  | { tool: "view_wishlist"; products: Awaited<ReturnType<typeof getWishlist>>[number]["product"][] }
+  | { tool: "wishlist_ack"; action: "added" | "removed" }
   | { error: string };
 
 function stockErrorMessage(reason: "out_of_stock" | "not_found", available?: number) {
@@ -284,6 +322,20 @@ export async function runTool(name: string, rawArgs: unknown, ctx: ToolContext):
     case "track_orders": {
       const orders = await getRecentOrders(ctx.userId);
       return { tool: "orders", orders };
+    }
+    case "view_wishlist": {
+      const items = await getWishlist(ctx.userId);
+      return { tool: "view_wishlist", products: items.map((i) => i.product) };
+    }
+    case "add_to_wishlist": {
+      const args = wishlistProductArgs.parse(rawArgs);
+      await addToWishlist(ctx.userId, args.productId);
+      return { tool: "wishlist_ack", action: "added" };
+    }
+    case "remove_from_wishlist": {
+      const args = wishlistProductArgs.parse(rawArgs);
+      await removeFromWishlist(ctx.userId, args.productId);
+      return { tool: "wishlist_ack", action: "removed" };
     }
     default:
       return { error: `Unknown tool: ${name}` };

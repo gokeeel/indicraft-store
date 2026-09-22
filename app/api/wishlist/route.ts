@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getWishlist, addToWishlist, removeFromWishlist } from "@/lib/services/catalog";
 
 async function requireUserId() {
   const session = await getServerSession(authOptions);
@@ -13,11 +13,7 @@ export async function GET() {
   const userId = await requireUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const items = await prisma.wishlistItem.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    include: { product: { include: { images: true, category: true } } },
-  });
+  const items = await getWishlist(userId);
   return NextResponse.json(items);
 }
 
@@ -30,12 +26,8 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
-  const item = await prisma.wishlistItem.upsert({
-    where: { userId_productId: { userId, productId: parsed.data.productId } },
-    update: {},
-    create: { userId, productId: parsed.data.productId },
-  });
-  return NextResponse.json(item, { status: 201 });
+  await addToWishlist(userId, parsed.data.productId);
+  return NextResponse.json({ ok: true }, { status: 201 });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -45,6 +37,6 @@ export async function DELETE(req: NextRequest) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
-  await prisma.wishlistItem.deleteMany({ where: { userId, productId: parsed.data.productId } });
+  await removeFromWishlist(userId, parsed.data.productId);
   return NextResponse.json({ ok: true });
 }

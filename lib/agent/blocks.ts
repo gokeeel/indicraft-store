@@ -54,6 +54,10 @@ export function toBlocks(result: ToolResult): Block[] {
         : [];
     case "orders":
       return [{ type: "orders", orders: result.orders }];
+    case "view_wishlist":
+      return [{ type: "product_carousel", products: result.products }];
+    case "wishlist_ack":
+      return [];
     default:
       return [];
   }

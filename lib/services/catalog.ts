@@ -125,6 +125,26 @@ export async function getWishlistedProductIds(userId: string | undefined): Promi
   return new Set(items.map((i) => i.productId));
 }
 
+export async function getWishlist(userId: string) {
+  return prisma.wishlistItem.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: { product: { include: { images: true, category: true } } },
+  });
+}
+
+export async function addToWishlist(userId: string, productId: string) {
+  await prisma.wishlistItem.upsert({
+    where: { userId_productId: { userId, productId } },
+    update: {},
+    create: { userId, productId },
+  });
+}
+
+export async function removeFromWishlist(userId: string, productId: string) {
+  await prisma.wishlistItem.deleteMany({ where: { userId, productId } });
+}
+
 export async function getCart(userId: string) {
   return prisma.cart.findFirst({
     where: { userId },
