@@ -11,7 +11,7 @@ export function AddToCartForm({ productId, inStock }: { productId: string; inSto
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
-  async function handleAdd() {
+  async function addToCart(): Promise<boolean> {
     setStatus("loading");
     const res = await fetch("/api/cart", {
       method: "POST",
@@ -20,20 +20,25 @@ export function AddToCartForm({ productId, inStock }: { productId: string; inSto
     });
     if (res.status === 401) {
       router.push("/login");
-      return;
+      return false;
     }
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setErrorMessage(data.error ?? "Something went wrong.");
       setStatus("error");
-      return;
+      return false;
     }
     setStatus("added");
     router.refresh();
+    return true;
+  }
+
+  async function handleBuyNow() {
+    if (await addToCart()) router.push("/checkout");
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Input
         type="number"
         min={1}
@@ -42,8 +47,11 @@ export function AddToCartForm({ productId, inStock }: { productId: string; inSto
         className="w-20"
         disabled={!inStock}
       />
-      <Button onClick={handleAdd} disabled={!inStock || status === "loading"}>
+      <Button onClick={addToCart} disabled={!inStock || status === "loading"}>
         {status === "added" ? "Added!" : "Add to Cart"}
+      </Button>
+      <Button variant="outline" onClick={handleBuyNow} disabled={!inStock || status === "loading"}>
+        Buy Now
       </Button>
       {status === "error" && <span className="text-sm text-red-600">{errorMessage}</span>}
     </div>

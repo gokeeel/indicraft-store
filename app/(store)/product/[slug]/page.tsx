@@ -10,6 +10,7 @@ import { AddToCartForm } from "@/components/product/AddToCartForm";
 import { WishlistButton } from "@/components/product/WishlistButton";
 import { Reviews } from "@/components/product/Reviews";
 import { ProductCard } from "@/components/product/ProductCard";
+import { AskVenmathiButton } from "@/components/agent/AskVenmathiButton";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getProductBySlug, getRelatedProducts, getProductReviews, getWishlistedProductIds } from "@/lib/services/catalog";
 
@@ -98,6 +99,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
 
           <p className="mt-3 text-xs text-muted">🚚 Free shipping on orders over ₹999</p>
+
+          <div className="mt-4 rounded-lg border border-border bg-[#f7f5f2] p-3">
+            <p className="mb-2 text-xs font-medium text-muted">Ask Venmathi about this product</p>
+            <div className="flex flex-wrap gap-2">
+              <AskVenmathiButton prompt={`Tell me about the ${product.name}.`} variant="outline" className="bg-white text-xs">
+                Tell me about this craft
+              </AskVenmathiButton>
+              <AskVenmathiButton prompt={`Is the ${product.name} a good gift?`} variant="outline" className="bg-white text-xs">
+                Is this a good gift?
+              </AskVenmathiButton>
+              <AskVenmathiButton prompt={`Find products similar to the ${product.name}.`} variant="outline" className="bg-white text-xs">
+                Find similar products
+              </AskVenmathiButton>
+            </div>
+          </div>
 
           <details className="mt-6 text-sm">
             <summary className="cursor-pointer font-medium">Care Instructions</summary>
