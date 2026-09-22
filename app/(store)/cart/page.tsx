@@ -7,6 +7,7 @@ import { cartSubtotal, computeCartTotals } from "@/lib/services/pricing";
 import { Button } from "@/components/ui/button";
 import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { RemoveItemButton } from "@/components/cart/RemoveItemButton";
+import { QuantityStepper } from "@/components/cart/QuantityStepper";
 import { formatPrice } from "@/lib/utils";
 
 export default async function CartPage() {
@@ -52,14 +53,21 @@ export default async function CartPage() {
                   <Image src={item.product.images[0].url} alt={item.product.name} fill className="object-cover" />
                 )}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <Link href={`/product/${item.product.slug}`} className="font-medium hover:text-primary">
                   {item.product.name}
                 </Link>
-                <p className="text-sm text-muted">Qty: {item.quantity}</p>
                 <PriceDisplay price={item.product.price} salePrice={item.product.salePrice} />
+                <QuantityStepper itemId={item.id} quantity={item.quantity} stock={item.product.stock} />
               </div>
-              <RemoveItemButton itemId={item.id} />
+              <div className="flex flex-col items-end justify-between">
+                <p className="font-semibold">
+                  {formatPrice(
+                    parseFloat((item.product.salePrice ?? item.product.price).toString()) * item.quantity
+                  )}
+                </p>
+                <RemoveItemButton itemId={item.id} />
+              </div>
             </li>
           ))}
         </ul>
