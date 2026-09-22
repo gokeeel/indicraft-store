@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFilters } from "@/components/shop/ShopFilters";
+import { ActiveFilters } from "@/components/shop/ActiveFilters";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { Pagination } from "@/components/shop/Pagination";
-import { getCategories, getProducts, ProductSort } from "@/lib/services/catalog";
-
-const MIN_PRICE = 350;
-const MAX_PRICE = 6800;
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { getCategories, getFilterOptions, getProducts, ProductSort } from "@/lib/services/catalog";
 
 export async function generateMetadata({
   searchParams,
@@ -26,8 +26,9 @@ export default async function ShopPage({
   const params = await searchParams;
   const page = params.page ? Math.max(1, Number(params.page)) : 1;
 
-  const [categories, result] = await Promise.all([
+  const [categories, filterOptions, result] = await Promise.all([
     getCategories(),
+    getFilterOptions(),
     getProducts(
       {
         category: params.category,
@@ -42,26 +43,48 @@ export default async function ShopPage({
     ),
   ]);
 
+  const activeCategory = categories.find((c) => c.slug === params.category);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <Breadcrumbs items={params.q ? [{ label: `Search: "${params.q}"` }] : activeCategory ? [{ label: "Shop", href: "/shop" }, { label: activeCategory.name }] : [{ label: "Shop" }]} />
+
       <div className="grid gap-8 md:grid-cols-[220px_1fr]">
-        <ShopFilters categories={categories} min={MIN_PRICE} max={MAX_PRICE} />
+        <ShopFilters
+          categories={categories}
+          min={filterOptions.minPrice}
+          max={filterOptions.maxPrice}
+          materials={filterOptions.materials}
+          regions={filterOptions.regions}
+        />
 
         <div>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <h1 className="text-xl font-bold">
               {params.q ? `Results for "${params.q}" (${result.total})` : `Shop (${result.total})`}
             </h1>
             <SortSelect />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {result.items.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ActiveFilters />
 
-          {result.items.length === 0 && <p className="text-muted">No products match these filters.</p>}
+          {result.items.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {result.items.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border p-10 text-center">
+              <p className="font-medium">No products found</p>
+              <p className="mt-1 text-sm text-muted">
+                Nothing matched these filters. Try widening the price range or clearing a filter.
+              </p>
+              <Link href="/shop" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
+                Clear all filters
+              </Link>
+            </div>
+          )}
 
           <Pagination page={result.page} totalPages={result.totalPages} params={params} />
         </div>

@@ -97,6 +97,23 @@ export async function getCategories() {
   });
 }
 
+// Every filter shown in the UI must actually match real product data (UX_STANDARDS.md
+// Section 8.4) -- a hardcoded list drifts the moment products are added/changed, silently
+// turning into a decorative filter for whatever isn't in the list.
+export async function getFilterOptions() {
+  const [materials, regions, priceRange] = await Promise.all([
+    prisma.product.findMany({ where: { material: { not: null } }, select: { material: true }, distinct: ["material"] }),
+    prisma.product.findMany({ where: { region: { not: null } }, select: { region: true }, distinct: ["region"] }),
+    prisma.product.aggregate({ _min: { price: true }, _max: { price: true } }),
+  ]);
+  return {
+    materials: materials.map((m) => m.material!).sort(),
+    regions: regions.map((r) => r.region!).sort(),
+    minPrice: Math.floor(Number(priceRange._min.price ?? 0)),
+    maxPrice: Math.ceil(Number(priceRange._max.price ?? 10000)),
+  };
+}
+
 export async function getCart(userId: string) {
   return prisma.cart.findFirst({
     where: { userId },

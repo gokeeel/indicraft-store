@@ -9,6 +9,8 @@ const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
   { href: "/shop?category=fabric", label: "Fabric" },
   { href: "/shop?category=home-decor", label: "Home Decor" },
+  { href: "/shop?category=household", label: "Household" },
+  { href: "/shop?category=mugs", label: "Mugs" },
   { href: "/shop?category=spices", label: "Spices" },
 ];
 

@@ -5,17 +5,18 @@ import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-const MATERIALS = ["Cotton", "Silk", "Brass (Dhokra)", "Terracotta", "Copper", "Jute", "Wool-Cotton"];
-const REGIONS = ["Rajasthan", "Kerala", "West Bengal", "Gujarat", "Bihar", "Karnataka", "Assam"];
-
 export function ShopFilters({
   categories,
   min,
   max,
+  materials,
+  regions,
 }: {
   categories: { name: string; slug: string; _count: { products: number } }[];
   min: number;
   max: number;
+  materials: string[];
+  regions: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,7 +86,7 @@ export function ShopFilters({
             <SelectValue placeholder="Any material" />
           </SelectTrigger>
           <SelectContent>
-            {MATERIALS.map((m) => (
+            {materials.map((m) => (
               <SelectItem key={m} value={m}>
                 {m}
               </SelectItem>
@@ -101,7 +102,7 @@ export function ShopFilters({
             <SelectValue placeholder="Any region" />
           </SelectTrigger>
           <SelectContent>
-            {REGIONS.map((r) => (
+            {regions.map((r) => (
               <SelectItem key={r} value={r}>
                 {r}
               </SelectItem>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -11,6 +10,7 @@ import { AddToCartForm } from "@/components/product/AddToCartForm";
 import { WishlistButton } from "@/components/product/WishlistButton";
 import { Reviews } from "@/components/product/Reviews";
 import { ProductCard } from "@/components/product/ProductCard";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getProductBySlug, getRelatedProducts, getProductReviews } from "@/lib/services/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -46,17 +46,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <nav className="mb-6 text-xs text-muted">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <span className="mx-1">/</span>
-        <Link href="/shop" className="hover:text-primary">Shop</Link>
-        <span className="mx-1">/</span>
-        <Link href={`/shop?category=${product.category.slug}`} className="hover:text-primary">
-          {product.category.name}
-        </Link>
-        <span className="mx-1">/</span>
-        <span className="text-foreground">{product.name}</span>
-      </nav>
+      <Breadcrumbs
+        items={[
+          { label: "Shop", href: "/shop" },
+          { label: product.category.name, href: `/shop?category=${product.category.slug}` },
+          { label: product.name },
+        ]}
+      />
 
       <div className="grid gap-10 md:grid-cols-2">
         <Gallery images={product.images} name={product.name} />
