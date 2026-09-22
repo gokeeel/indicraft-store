@@ -20,6 +20,11 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium">
           {product.category.name}
         </span>
+        {product.stock <= 0 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+            <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white">Sold Out</span>
+          </div>
+        )}
       </div>
       <div className="mt-2">
         <h3 className="line-clamp-1 text-sm font-medium">{product.name}</h3>

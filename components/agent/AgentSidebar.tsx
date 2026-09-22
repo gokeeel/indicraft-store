@@ -28,7 +28,7 @@ function errorText(data: unknown, fallback: string): string {
 }
 
 export function AgentSidebar() {
-  const { open, setOpen, toggle } = useAgentPanel();
+  const { open, setOpen, toggle, pendingMessage, clearPendingMessage } = useAgentPanel();
   const { data: session, status } = useSession();
   // Lazy init reads sessionStorage synchronously on the client. Safe from hydration
   // mismatches because the panel starts closed, so this content isn't in the initial DOM.
@@ -61,6 +61,18 @@ export function AgentSidebar() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, setOpen]);
+
+  // A homepage "quick prompt" button (askVenmathi()) opens the panel with a message already
+  // queued -- send it once we're open and actually logged in (the login gate below blocks
+  // send() otherwise, and the message would silently vanish).
+  useEffect(() => {
+    if (open && pendingMessage && session) {
+      const message = pendingMessage;
+      clearPendingMessage();
+      send(message);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pendingMessage, session]);
 
   async function send(text: string) {
     const userEntry: ChatEntry = { id: makeId(), role: "user", content: text };

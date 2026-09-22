@@ -9,7 +9,7 @@ const categories = [
   { name: "Household", slug: "household" },
   { name: "Mugs", slug: "mugs" },
   { name: "Spices", slug: "spices" },
-  { name: "Uncategorized", slug: "uncategorized" },
+  { name: "Gifts & Accessories", slug: "uncategorized" },
 ];
 
 // Real product photos (from the client's brand asset repo) keyed by product slug.
@@ -241,7 +241,7 @@ async function main() {
   for (const c of categories) {
     await prisma.category.upsert({
       where: { slug: c.slug },
-      update: {},
+      update: { name: c.name },
       create: c,
     });
   }

@@ -2,7 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product/ProductCard";
+import { AskVenmathiButton } from "@/components/agent/AskVenmathiButton";
 import { getCategories, getProducts } from "@/lib/services/catalog";
+
+const QUICK_PROMPTS = [
+  "Find me a handmade gift under ₹1,500",
+  "Show me home decor from Rajasthan",
+  "Find a traditional fabric for a wedding",
+  "What can I get for ₹2,000?",
+];
 
 const CATEGORY_IMAGES: Record<string, string> = {
   fabric: "/images/category-fabric.jpg",
@@ -39,9 +47,14 @@ export default async function HomePage() {
           <p className="mt-4 max-w-lg text-white/80">
             Fabric, home decor, spices and more — sourced directly from craft communities across India.
           </p>
-          <Button asChild size="lg" className="mt-6">
-            <Link href="/shop">Shop the Collection</Link>
-          </Button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/shop">Shop the Collection</Link>
+            </Button>
+            <AskVenmathiButton prompt="Hi! What can you help me find?" className="border-white/40 bg-white/10 text-white hover:bg-white/20">
+              Ask Venmathi
+            </AskVenmathiButton>
+          </div>
         </div>
       </section>
 
@@ -75,6 +88,23 @@ export default async function HomePage() {
           {featured.items.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="rounded-lg border border-border bg-[#f7f5f2] p-8 text-center">
+          <h2 className="text-2xl font-bold">Ask Venmathi</h2>
+          <p className="mx-auto mt-2 max-w-lg text-muted">
+            Tell me what you&apos;re looking for. I can find products, compare options, add them to
+            your cart, and help you complete checkout — by text or voice.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {QUICK_PROMPTS.map((prompt) => (
+              <AskVenmathiButton key={prompt} prompt={prompt} variant="outline" className="bg-white">
+                {prompt}
+              </AskVenmathiButton>
+            ))}
+          </div>
         </div>
       </section>
 
