@@ -57,6 +57,7 @@ export default async function CartPage() {
                 <Link href={`/product/${item.product.slug}`} className="font-medium hover:text-primary">
                   {item.product.name}
                 </Link>
+                {item.product.artisan && <p className="text-xs text-muted">By {item.product.artisan}</p>}
                 <PriceDisplay price={item.product.price} salePrice={item.product.salePrice} />
                 <QuantityStepper itemId={item.id} quantity={item.quantity} stock={item.product.stock} />
               </div>
