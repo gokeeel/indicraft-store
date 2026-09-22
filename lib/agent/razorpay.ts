@@ -47,11 +47,31 @@ export class RazorpayProvider implements PaymentProvider {
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
+      // Razorpay enforces a unique reference_id -- a second attempt for the same order (e.g.
+      // "Pay Now" after navigating away from checkout before paying) hits this every time,
+      // since reference_id has to stay == orderId for the callback route to look the order
+      // back up. Recover by returning the link that already exists instead of failing.
+      if (res.status === 400 && body.includes("already exists")) {
+        return this.findExistingPaymentLink(orderId);
+      }
       throw new Error(`Razorpay payment link creation failed (${res.status}): ${body.slice(0, 300)}`);
     }
 
     const data = await res.json();
     return { url: data.short_url as string };
+  }
+
+  private async findExistingPaymentLink(orderId: string): Promise<{ url: string }> {
+    // Verified against Razorpay's docs: GET /v1/payment_links/?reference_id=X returns
+    // { payment_links: [...] } -- not `items`, unlike some of their other list endpoints.
+    const res = await fetch(`${RAZORPAY_BASE_URL}/payment_links/?reference_id=${orderId}`, {
+      headers: { Authorization: authHeader() },
+    });
+    if (!res.ok) throw new Error(`Razorpay payment link lookup failed (${res.status})`);
+    const data = await res.json();
+    const link = data.payment_links?.[0];
+    if (!link) throw new Error("Razorpay reported a duplicate reference_id but no existing link was found");
+    return { url: link.short_url as string };
   }
 }
 

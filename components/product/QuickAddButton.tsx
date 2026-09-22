@@ -37,7 +37,7 @@ export function QuickAddButton({ productId, inStock }: { productId: string; inSt
       disabled={status === "loading"}
       aria-label="Quick add to cart"
       className={cn(
-        "absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md hover:bg-primary hover:text-primary-foreground",
+        "absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md hover:bg-primary hover:text-primary-foreground",
         status === "added" && "bg-primary text-primary-foreground"
       )}
     >

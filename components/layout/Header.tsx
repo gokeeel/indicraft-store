@@ -45,10 +45,17 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
           <User className="h-5 w-5" />
         </Link>
 
-        <Link href="/cart" className="relative p-2 hover:text-primary" aria-label="Cart">
+        <Link
+          href="/cart"
+          className="relative p-2 hover:text-primary"
+          aria-label={cartCount > 0 ? `Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}` : "Cart"}
+        >
           <ShoppingBag className="h-5 w-5" />
           {cartCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            <span
+              aria-live="polite"
+              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground"
+            >
               {cartCount}
             </span>
           )}

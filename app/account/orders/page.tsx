@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { PayNowButton } from "@/components/account/PayNowButton";
 
 const STATUS_STEPS = ["paid", "processing", "shipped", "delivered"];
 
@@ -84,6 +85,12 @@ export default async function OrdersPage({
             Shipping to: {order.address.name}, {order.address.line1}, {order.address.city}, {order.address.state}{" "}
             {order.address.zip}
           </p>
+
+          {order.status === "pending_payment" && (
+            <div className="mt-3">
+              <PayNowButton orderId={order.id} />
+            </div>
+          )}
         </div>
       ))}
     </div>

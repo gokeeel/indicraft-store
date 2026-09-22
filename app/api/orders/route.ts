@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createOrderFromCart, OrderCreationError, isRetryableTransactionError } from "@/lib/services/orders";
+import { getPaymentProvider } from "@/lib/agent/payments";
 
 const schema = z.object({ addressId: z.string() });
 
@@ -33,7 +34,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const order = await createOrderFromCart(userId, parsed.data.addressId);
-    return NextResponse.json(order, { status: 201 });
+    // The traditional checkout page skipped this entirely (left as "Payment will be added
+    // here later") -- an order placed through it became permanently stuck in
+    // pending_payment with no way to pay, anywhere in the UI. Same payment-link generation
+    // the agent's confirm flow already does (lib/agent/confirm.ts).
+    const provider = getPaymentProvider();
+    const payment = await provider.createPaymentLink({ orderId: order.id, amount: Number(order.total) });
+    return NextResponse.json({ ...order, paymentUrl: payment.url }, { status: 201 });
   } catch (err) {
     if (err instanceof OrderCreationError) return NextResponse.json({ error: err.message }, { status: 400 });
     if (isRetryableTransactionError(err)) return NextResponse.json({ error: "Please try again." }, { status: 409 });

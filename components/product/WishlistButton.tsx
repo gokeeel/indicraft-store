@@ -51,7 +51,7 @@ export function WishlistButton({
       aria-pressed={saved}
       className={
         compact
-          ? "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm hover:bg-white"
+          ? "absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-sm hover:bg-white"
           : "inline-flex h-10 w-10 items-center justify-center rounded-md border border-border hover:bg-black/5"
       }
     >

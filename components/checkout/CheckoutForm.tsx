@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddressForm, AddressFormValues } from "@/components/checkout/AddressForm";
 import { formatPrice } from "@/lib/utils";
@@ -49,6 +50,11 @@ export function CheckoutForm({ addresses, subtotal }: { addresses: Address[]; su
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Could not place order.");
       setPlacing(false);
+      return;
+    }
+    const order = await res.json();
+    if (order.paymentUrl) {
+      window.location.href = order.paymentUrl;
       return;
     }
     router.push("/account/orders");
@@ -119,11 +125,13 @@ export function CheckoutForm({ addresses, subtotal }: { addresses: Address[]; su
           <span>Total</span>
           <span>{formatPrice(total)}</span>
         </div>
-        <p className="pt-2 text-xs text-muted">Payment will be added here later.</p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button className="w-full" onClick={placeOrder} disabled={placing}>
           {placing ? "Placing Order..." : "Place Order"}
         </Button>
+        <p className="flex items-center justify-center gap-1.5 pt-1 text-xs text-muted">
+          <Lock className="h-3 w-3" /> Secure checkout — you&apos;ll complete payment on a protected page.
+        </p>
       </div>
     </div>
   );

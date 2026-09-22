@@ -98,7 +98,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <AddToCartForm productId={product.id} inStock={product.stock > 0} />
           </div>
 
-          <p className="mt-3 text-xs text-muted">🚚 Free shipping on orders over ₹999</p>
+          <p className="mt-3 text-xs text-muted">Free shipping on orders over ₹999</p>
 
           <div className="mt-4 rounded-lg border border-border bg-[#f7f5f2] p-3">
             <p className="mb-2 text-xs font-medium text-muted">Ask Venmathi about this product</p>
