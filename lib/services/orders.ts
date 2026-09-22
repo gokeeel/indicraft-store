@@ -73,7 +73,13 @@ export async function createOrderFromCart(
 
       return order;
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      // Prisma's 5s default is too tight for this DB's occasional latency spikes (pooled
+      // serverless Postgres) — the transaction itself does little work, it's round-trip time
+      // that blows the budget.
+      timeout: 15000,
+    }
   );
 }
 
