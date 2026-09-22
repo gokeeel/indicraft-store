@@ -62,6 +62,14 @@ export function AgentSidebar() {
     }
   }, [entries]);
 
+  // WCAG dialog pattern: return focus to whatever triggered the panel once it closes.
+  // ChatInput's autoFocus handles the other half (moving focus in on open).
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    return () => previouslyFocused?.focus?.();
+  }, [open]);
+
   // Escape closes the panel, matching standard dialog/drawer behavior.
   useEffect(() => {
     if (!open) return;

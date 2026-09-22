@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { cloneElement, useId, useState, type ReactElement } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
+// Placeholder text disappears the moment a user types into the field, so it can't stand in for
+// a real label (WCAG / UX_STANDARDS.md Section 22.4: "Labels remain visible").
+function Field({ label, children }: { label: string; children: ReactElement<{ id?: string }> }) {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted">
+        {label} <span aria-hidden="true">*</span>
+      </label>
+      {cloneElement(children, { id })}
+    </div>
+  );
+}
 
 export type AddressFormValues = {
   name: string;
@@ -48,13 +62,25 @@ export function AddressForm({
         setSubmitting(false);
       }}
     >
-      <Input placeholder="Full name" required value={values.name} onChange={(e) => set("name", e.target.value)} />
-      <Input placeholder="Phone number" required value={values.phone} onChange={(e) => set("phone", e.target.value)} />
-      <Input placeholder="Address" required value={values.line1} onChange={(e) => set("line1", e.target.value)} />
+      <Field label="Full name">
+        <Input required autoComplete="name" value={values.name} onChange={(e) => set("name", e.target.value)} />
+      </Field>
+      <Field label="Phone number">
+        <Input required type="tel" autoComplete="tel" value={values.phone} onChange={(e) => set("phone", e.target.value)} />
+      </Field>
+      <Field label="Address">
+        <Input required autoComplete="address-line1" value={values.line1} onChange={(e) => set("line1", e.target.value)} />
+      </Field>
       <div className="grid grid-cols-3 gap-3">
-        <Input placeholder="City" required value={values.city} onChange={(e) => set("city", e.target.value)} />
-        <Input placeholder="State" required value={values.state} onChange={(e) => set("state", e.target.value)} />
-        <Input placeholder="PIN code" required value={values.zip} onChange={(e) => set("zip", e.target.value)} />
+        <Field label="City">
+          <Input required autoComplete="address-level2" value={values.city} onChange={(e) => set("city", e.target.value)} />
+        </Field>
+        <Field label="State">
+          <Input required autoComplete="address-level1" value={values.state} onChange={(e) => set("state", e.target.value)} />
+        </Field>
+        <Field label="PIN code">
+          <Input required autoComplete="postal-code" value={values.zip} onChange={(e) => set("zip", e.target.value)} />
+        </Field>
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={values.isDefault} onChange={(e) => set("isDefault", e.target.checked)} />

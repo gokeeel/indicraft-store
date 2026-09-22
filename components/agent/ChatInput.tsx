@@ -37,6 +37,10 @@ export function ChatInput({
         // browser blurs it for you), which kicked the user out of the box after every send.
         // Submission is still blocked below via the Send button's disabled state.
         aria-label="Message Venmathi"
+        // Safe here specifically because ChatInput only ever mounts when the panel opens
+        // (conditionally rendered in AgentSidebar, not just hidden) -- so this fires exactly
+        // once per open, matching the WCAG dialog pattern of moving focus in on open.
+        autoFocus
       />
       <VoiceButton onAudioCaptured={onSendVoice} isProcessing={!!isProcessingVoice} disabled={disabled} />
       <Button type="submit" disabled={disabled || !value.trim()}>

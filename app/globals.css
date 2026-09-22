@@ -27,3 +27,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* UX_STANDARDS.md Section 22.3: "Focus states are visible." The hand-rolled <button> elements
+   throughout the app (WishlistButton, QuickAddButton, QuantityStepper, filter chips, etc.) don't
+   use components/ui/button.tsx and had no focus styling at all -- covering them here once
+   instead of adding focus-visible classes to every one individually. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

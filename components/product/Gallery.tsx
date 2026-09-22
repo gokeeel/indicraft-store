@@ -13,7 +13,9 @@ export function Gallery({ images, name }: { images: { url: string; altText: stri
         {images.map((img, i) => (
           <button
             key={img.url + i}
+            type="button"
             onClick={() => setActive(i)}
+            aria-current={i === active}
             className={`relative h-16 w-16 overflow-hidden rounded-md border ${
               i === active ? "border-primary" : "border-border"
             }`}
