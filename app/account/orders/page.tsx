@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { formatPrice } from "@/lib/utils";
 import { getRecentOrders } from "@/lib/services/orders";
 import { PayNowButton } from "@/components/account/PayNowButton";
+import { Button } from "@/components/ui/button";
 
 const STATUS_STEPS = ["paid", "processing", "shipped", "delivered"];
 
@@ -28,7 +30,15 @@ export default async function OrdersPage({
   const orders = await getRecentOrders(userId, 50);
 
   if (orders.length === 0) {
-    return <p className="text-muted">You haven&apos;t placed any orders yet.</p>;
+    return (
+      <div className="rounded-lg border border-dashed border-border p-10 text-center">
+        <p className="font-medium">No orders yet</p>
+        <p className="mt-1 text-sm text-muted">Once you place an order, you&apos;ll be able to track it here.</p>
+        <Button asChild className="mt-4">
+          <Link href="/shop">Start shopping</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
