@@ -88,3 +88,14 @@ export async function createOrderFromCart(
 export function isRetryableTransactionError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034";
 }
+
+/** Recent orders for "where is my order?" -- both the /account/orders page and the agent's
+ *  track_orders tool (UX_STANDARDS.md Section 14/21.4) read from this single source. */
+export async function getRecentOrders(userId: string, take = 5) {
+  return prisma.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take,
+    include: { items: { include: { product: true } }, address: true },
+  });
+}

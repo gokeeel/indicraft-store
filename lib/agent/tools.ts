@@ -3,6 +3,7 @@ import { getProducts, getProductById, getCartSummary } from "@/lib/services/cata
 import { addToCart, updateCartItemQuantity, removeFromCart } from "@/lib/services/cart";
 import { getAddresses } from "@/lib/services/addresses";
 import { buildOrderPreview, type OrderPreview } from "@/lib/agent/preview";
+import { getRecentOrders } from "@/lib/services/orders";
 import type { ToolSchema } from "@/lib/agent/sarvam";
 
 export type ToolContext = { userId: string };
@@ -178,6 +179,15 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "track_orders",
+      description:
+        "Get the user's recent orders with their current status (pending payment, paid, processing, shipped, delivered, etc.). Use this whenever they ask about an existing order — e.g. 'where is my order', 'has it shipped', 'did my payment go through'.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
 ];
 
 type CartSummary = Awaited<ReturnType<typeof getCartSummary>>;
@@ -193,6 +203,7 @@ export type ToolResult =
   | { tool: "request_new_address" }
   | ({ tool: "order_summary" } & OrderPreview)
   | { tool: "order_summary"; error: string }
+  | { tool: "orders"; orders: Awaited<ReturnType<typeof getRecentOrders>> }
   | { error: string };
 
 function stockErrorMessage(reason: "out_of_stock" | "not_found", available?: number) {
@@ -269,6 +280,10 @@ export async function runTool(name: string, rawArgs: unknown, ctx: ToolContext):
       const result = await buildOrderPreview(ctx.userId, args.addressId);
       if (!result.ok) return { tool: "order_summary", error: result.error };
       return { tool: "order_summary", ...result.preview };
+    }
+    case "track_orders": {
+      const orders = await getRecentOrders(ctx.userId);
+      return { tool: "orders", orders };
     }
     default:
       return { error: `Unknown tool: ${name}` };

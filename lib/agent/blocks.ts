@@ -16,7 +16,8 @@ export type Block =
   | (Omit<Extract<ToolResult, { tool: "order_summary"; items: unknown }>, "tool"> & { type: "order_summary" })
   // Produced client-side by AgentSidebar after a successful /api/agent/confirm call, not by a
   // model tool — order creation is never something the model can trigger (PRD Section 6).
-  | { type: "payment_link"; orderId: string; orderNumber: string; amount: number; url: string };
+  | { type: "payment_link"; orderId: string; orderNumber: string; amount: number; url: string }
+  | { type: "orders"; orders: Extract<ToolResult, { tool: "orders" }>["orders"] };
 
 export function toBlocks(result: ToolResult): Block[] {
   if ("error" in result) return [];
@@ -51,6 +52,8 @@ export function toBlocks(result: ToolResult): Block[] {
             },
           ]
         : [];
+    case "orders":
+      return [{ type: "orders", orders: result.orders }];
     default:
       return [];
   }

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { getRecentOrders } from "@/lib/services/orders";
 import { PayNowButton } from "@/components/account/PayNowButton";
 
 const STATUS_STEPS = ["paid", "processing", "shipped", "delivered"];
@@ -25,11 +25,7 @@ export default async function OrdersPage({
   const { payment } = await searchParams;
   const banner = payment ? PAYMENT_BANNERS[payment] : undefined;
 
-  const orders = await prisma.order.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    include: { items: { include: { product: true } }, address: true },
-  });
+  const orders = await getRecentOrders(userId, 50);
 
   if (orders.length === 0) {
     return <p className="text-muted">You haven&apos;t placed any orders yet.</p>;

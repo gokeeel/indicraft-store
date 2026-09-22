@@ -8,6 +8,7 @@ import { AddressPicker } from "@/components/agent/AddressPicker";
 import { AddressFormCard } from "@/components/agent/AddressFormCard";
 import { OrderSummaryCard } from "@/components/agent/OrderSummaryCard";
 import { PaymentCard } from "@/components/agent/PaymentCard";
+import { OrdersStatusCard } from "@/components/agent/OrdersStatusCard";
 import type { Block } from "@/lib/agent/blocks";
 
 export function BlockRenderer({
@@ -53,6 +54,8 @@ export function BlockRenderer({
       );
     case "payment_link":
       return <PaymentCard orderId={block.orderId} orderNumber={block.orderNumber} amount={block.amount} url={block.url} />;
+    case "orders":
+      return <OrdersStatusCard orders={block.orders} />;
     default:
       return null;
   }
