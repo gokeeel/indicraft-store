@@ -54,6 +54,12 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
           )}
         </Link>
       </div>
+
+      {/* Search is a primary action (Section 7.1) but was only reachable on desktop --
+          mobile had no way to search at all. Own row so it doesn't crowd the icon row. */}
+      <div className="border-t border-border px-4 py-2 md:hidden">
+        <SearchBar className="flex items-center rounded-md border border-border px-3" />
+      </div>
     </header>
   );
 }

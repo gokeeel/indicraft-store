@@ -83,6 +83,17 @@ export default async function ShopPage({
               <Link href="/shop" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
                 Clear all filters
               </Link>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {categories.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/shop?category=${c.slug}`}
+                    className="rounded-full border border-border bg-white px-3 py-1 text-xs hover:border-primary"
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
 

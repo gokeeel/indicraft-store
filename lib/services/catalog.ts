@@ -32,11 +32,16 @@ export async function getProducts(
   }
   if (filter.q) {
     const q = filter.q;
+    // Section 7.1 requires search to cover product name, category, material, region, and
+    // artisan/craft terminology -- category and artisan were missing entirely, so e.g.
+    // searching "spices" or an artisan's name returned nothing.
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },
       { description: { contains: q, mode: "insensitive" } },
       { material: { contains: q, mode: "insensitive" } },
       { region: { contains: q, mode: "insensitive" } },
+      { artisan: { contains: q, mode: "insensitive" } },
+      { category: { name: { contains: q, mode: "insensitive" } } },
     ];
   }
 
