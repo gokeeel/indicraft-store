@@ -53,18 +53,22 @@ const REAL_PRODUCT_IMAGES: Record<string, string> = {
   "jute-lunch-bag": "jute-lunch-bag.webp",
   "traditional-wooden-puzzle": "traditional-wooden-puzzle.jpg",
   "wooden-rocking-horse": "wooden-rocking-horse.webp",
-  "kutch-mirror-work-shawl": "kutch-mirror-work-shawl.jpg",
-  "chikankari-embroidery-fabric": "chikankari-embroidery-fabric.jpg",
+  "kutch-mirror-work-embroidered-shawl": "kutch-mirror-work-shawl.jpg",
+  "chikankari-hand-embroidered-fabric": "chikankari-embroidery-fabric.jpg",
   "cuttack-silver-filigree-earrings": "cuttack-silver-filigree-earrings.jpg",
   "pichwai-painting-shrinathji": "pichwai-painting-shrinathji.jpg",
-  "longpi-black-pottery-pot": "longpi-black-pottery-pot.jpg",
+  "longpi-black-pottery-cooking-pot": "longpi-black-pottery-pot.jpg",
   "pochampally-ikat-saree": "pochampally-ikat-saree.jpg",
   "sambalpuri-ikat-saree": "sambalpuri-ikat-saree.jpg",
-  "kalamkari-hand-painted-cloth": "kalamkari-hand-painted-cloth.jpg",
-  "mekhela-chador-assam": "mekhela-chador-assam.jpg",
-  "bell-metal-nilavilakku-set": "bell-metal-nilavilakku-set.jpg",
-  "lac-bangles-rajasthan": "lac-bangles-making.jpg",
-  "aranmula-kannadi-mirror": "aranmula-kannadi-mirror.jpg",
+  "kalamkari-hand-painted-wall-cloth": "kalamkari-hand-painted-cloth.jpg",
+  "assam-muga-silk-mekhela-chador": "mekhela-chador-assam.jpg",
+  "kerala-bell-metal-nilavilakku-set": "bell-metal-nilavilakku-set.jpg",
+  "rajasthani-lac-bangles-set": "lac-bangles-making.jpg",
+  "aranmula-kannadi-metal-mirror": "aranmula-kannadi-mirror.jpg",
+  "maheshwari-handloom-saree": "maheshwari-saree-weaver.jpg",
+  "pipli-applique-wall-hanging": "pipli-applique-wall-hanging.jpg",
+  "chamba-rumal-embroidered-panel": "chamba-rumal-embroidery.jpg",
+  "kasuti-embroidered-fabric": "kasuti-embroidered-fabric.jpg",
 };
 
 // Openly-licensed (CC BY / CC BY-SA) photos sourced via Openverse from Wikimedia Commons and
@@ -72,18 +76,22 @@ const REAL_PRODUCT_IMAGES: Record<string, string> = {
 // this isn't just record-keeping: ProductGallery/product pages read this and render a credit
 // line. Keyed by the same slug as REAL_PRODUCT_IMAGES.
 const IMAGE_ATTRIBUTION: Record<string, { creator: string; license: string; sourceUrl: string }> = {
-  "kutch-mirror-work-shawl": { creator: "RubyGoes", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/61997808@N00/4195734357" },
-  "chikankari-embroidery-fabric": { creator: "Bundleofemotions", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=146764857" },
+  "kutch-mirror-work-embroidered-shawl": { creator: "RubyGoes", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/61997808@N00/4195734357" },
+  "chikankari-hand-embroidered-fabric": { creator: "Bundleofemotions", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=146764857" },
   "cuttack-silver-filigree-earrings": { creator: "SpeakingArch", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=191910814" },
   "pichwai-painting-shrinathji": { creator: "Karodimal/Kajodimal Ratan Lal", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=138706341" },
-  "longpi-black-pottery-pot": { creator: "Atcelsius", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=94272237" },
+  "longpi-black-pottery-cooking-pot": { creator: "Atcelsius", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=94272237" },
   "pochampally-ikat-saree": { creator: "Ramkumar Kalyani", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=155536146" },
   "sambalpuri-ikat-saree": { creator: "Lincon Mishra", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=15186413" },
-  "kalamkari-hand-painted-cloth": { creator: "rajaraman sundaram", license: "CC BY 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=60342338" },
-  "mekhela-chador-assam": { creator: "Chiring chandan", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=99144172" },
-  "bell-metal-nilavilakku-set": { creator: "Akhilan", license: "CC BY-SA 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=14838042" },
-  "lac-bangles-rajasthan": { creator: "Goutam1962", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=129224724" },
-  "aranmula-kannadi-mirror": { creator: "Prasanth Prakash", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=101277121" },
+  "kalamkari-hand-painted-wall-cloth": { creator: "rajaraman sundaram", license: "CC BY 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=60342338" },
+  "assam-muga-silk-mekhela-chador": { creator: "Chiring chandan", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=99144172" },
+  "kerala-bell-metal-nilavilakku-set": { creator: "Akhilan", license: "CC BY-SA 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=14838042" },
+  "rajasthani-lac-bangles-set": { creator: "Goutam1962", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=129224724" },
+  "aranmula-kannadi-metal-mirror": { creator: "Prasanth Prakash", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=101277121" },
+  "maheshwari-handloom-saree": { creator: "Eskay001", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=82529359" },
+  "pipli-applique-wall-hanging": { creator: "andryn2006", license: "CC BY-SA 2.0", sourceUrl: "https://www.flickr.com/photos/84985982@N00/24847305973" },
+  "chamba-rumal-embroidered-panel": { creator: "Fæ", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/50398299@N08/16215202147" },
+  "kasuti-embroidered-fabric": { creator: "Priya", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=97359138" },
 };
 
 type SeedProduct = {
@@ -247,7 +255,7 @@ const products: SeedProduct[] = [
     description: "Traditional two-piece Assamese garment woven from muga silk, a golden-sheened wild silk unique to Assam that grows more lustrous with each wash -- prized enough to have its own GI tag separate from other silks." },
   { name: "Kerala Bell Metal Nilavilakku Set", category: "home-decor", price: 1600, material: "Bell Metal", region: "Kerala", occasion: "Festive", stock: 15,
     description: "Traditional Kerala oil lamps cast in bell metal, sold as a graduated set -- nilavilakku are lit daily in many Kerala households and are a fixture of temple and wedding rituals across the state." },
-  { name: "Rajasthani Lac Bangles (Set)", category: "jewelry", price: 650, material: "Lac, Glass", region: "Rajasthan", occasion: "Festive", stock: 30,
+  { name: "Rajasthani Lac Bangles Set", category: "jewelry", price: 650, material: "Lac, Glass", region: "Rajasthan", occasion: "Festive", stock: 30,
     description: "Hand-molded lac bangles from Rajasthan -- lac resin is heated, shaped by hand around a metal rod, and studded with mirrors or stones while still warm, a technique little-changed for generations." },
   { name: "Cuttack Silver Filigree Earrings", category: "jewelry", price: 2400, material: "Silver", region: "Cuttack, Odisha", occasion: "Wedding", stock: 12,
     description: "Tarakasi (silver filigree) earrings from Cuttack, made by drawing silver into fine wire and hand-coiling it into intricate openwork patterns -- a GI-tagged craft over a thousand years old." },
@@ -257,6 +265,16 @@ const products: SeedProduct[] = [
     description: "Handmade metal-alloy mirror from Aranmula, Kerala -- unlike glass mirrors, the reflective surface is the polished metal itself, made from a closely-guarded family alloy recipe and GI-tagged to this one village." },
   { name: "Longpi Black Pottery Cooking Pot", category: "household", price: 1900, material: "Black Serpentine Clay", region: "Longpi, Manipur", stock: 10,
     description: "Hand-shaped cookware from Longpi, Manipur, made from black serpentine clay without a potter's wheel -- one of the few pottery traditions in India that skips the wheel entirely, shaped instead by hand and paddle." },
+
+  // Catalog-expansion batch 3.
+  { name: "Maheshwari Handloom Saree", category: "fabric", price: 3200, material: "Silk-Cotton", region: "Maheshwar, Madhya Pradesh", stock: 8,
+    description: "Woven on traditional pit looms in Maheshwar, Madhya Pradesh, a town whose weaving tradition dates back to the 18th-century patronage of Queen Ahilyabai Holkar -- known for its lightweight silk-cotton blend and reversible border design." },
+  { name: "Pipli Applique Wall Hanging", category: "home-decor", price: 1350, material: "Cotton, Mirror-work", region: "Pipli, Odisha", occasion: "Festive", stock: 16,
+    description: "Hand-appliqued cotton wall hanging from Pipli, Odisha, where colourful fabric cutouts -- often peacocks, elephants, and floral motifs -- are stitched onto a base cloth, a craft historically used for temple umbrellas and chariot canopies during Puri's Rath Yatra." },
+  { name: "Chamba Rumal Embroidered Panel", category: "fabric", price: 2900, material: "Silk on Cotton", region: "Chamba, Himachal Pradesh", stock: 6,
+    description: "Double-satin-stitch embroidery from Chamba, Himachal Pradesh, worked so precisely that the same image appears identical on both sides of the cloth -- traditionally depicting mythological scenes, once presented as ceremonial gifts by Himalayan royal courts." },
+  { name: "Kasuti Embroidered Fabric", category: "fabric", price: 1100, material: "Cotton", region: "Karnataka", stock: 20,
+    description: "Traditional Karnataka embroidery counted and stitched thread-by-thread onto the fabric's own weave (no printed guide pattern), producing geometric motifs identical on both front and back -- traditionally hand-stitched into a bride's wedding saree." },
 ];
 
 function slugify(name: string) {

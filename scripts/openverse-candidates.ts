@@ -11,79 +11,70 @@ import { join } from "node:path";
 
 const OPENVERSE_URL = "https://api.openverse.org/v1/images/";
 const CANDIDATES_PER_PRODUCT = 3;
-const OUT_DIR = join(__dirname, "..", "scratch", "openverse-wide");
+const OUT_DIR = join(__dirname, "..", "scratch", "openverse-batch3");
 const UA = "Indicraft-Catalog-Pipeline/1.0 (contact: viberzzz2026@gmail.com)";
 
 type PilotProduct = { id: string; name: string; category: string; region: string; query: string };
 
-// Broad taxonomy sweep, weighted toward categories the pilot proved productive (textiles,
-// jewelry, pottery/metalwork) but covering breadth for search-relevance regardless of photo
-// hit rate. Avoids exact overlap with the existing 62-product catalog.
+// Batch 3: well-documented, widely-known craft names (more likely to have Commons/Flickr
+// coverage than batch 2's more obscure regional terms). Avoids overlap with the 74 products
+// already in the catalog.
 const PRODUCTS: PilotProduct[] = [
-  // Textiles & weaves
-  { id: "pochampally-ikat-saree", name: "Pochampally Ikat Saree", category: "fabric", region: "Telangana", query: "pochampally ikat saree" },
-  { id: "sambalpuri-saree", name: "Sambalpuri Ikat Saree", category: "fabric", region: "Odisha", query: "sambalpuri saree odisha" },
-  { id: "paithani-saree", name: "Paithani Silk Saree", category: "fabric", region: "Paithan, Maharashtra", query: "paithani saree maharashtra" },
-  { id: "tussar-silk-fabric", name: "Tussar Silk Fabric", category: "fabric", region: "Bhagalpur, Bihar", query: "tussar silk fabric india" },
-  { id: "phulkari-dupatta-2", name: "Punjab Phulkari Dupatta", category: "fabric", region: "Punjab", query: "phulkari embroidery dupatta" },
-  { id: "shibori-dyed-fabric", name: "Bandhani Tie-Dye Fabric", category: "fabric", region: "Rajasthan", query: "bandhani tie dye fabric rajasthan" },
-  { id: "khadi-cotton-fabric", name: "Handspun Khadi Cotton", category: "fabric", region: "India", query: "khadi handspun cotton india" },
-  { id: "kanjeevaram-silk", name: "Kanjeevaram Silk Border", category: "fabric", region: "Tamil Nadu", query: "kanjeevaram silk saree border" },
-  { id: "banarasi-brocade", name: "Banarasi Brocade Fabric", category: "fabric", region: "Varanasi, Uttar Pradesh", query: "banarasi brocade weaving" },
-  { id: "kalamkari-hand-painted", name: "Hand-Painted Kalamkari Cloth", category: "fabric", region: "Andhra Pradesh", query: "kalamkari hand painted cloth" },
-  { id: "kani-shawl", name: "Kani Weave Shawl", category: "fabric", region: "Kashmir", query: "kani shawl kashmir weave" },
-  { id: "leheriya-fabric", name: "Leheriya Tie-Dye Fabric", category: "fabric", region: "Jaipur, Rajasthan", query: "leheriya tie dye rajasthan" },
-  { id: "mekhela-chador", name: "Assamese Mekhela Chador", category: "fabric", region: "Assam", query: "mekhela chador assam silk" },
-  { id: "muga-silk-fabric", name: "Assam Muga Silk Fabric", category: "fabric", region: "Assam", query: "muga silk assam" },
-  { id: "chanderi-dupatta", name: "Chanderi Silk Dupatta", category: "fabric", region: "Chanderi, Madhya Pradesh", query: "chanderi silk dupatta" },
-
-  // Pottery & terracotta
-  { id: "khurja-pottery", name: "Khurja Ceramic Pottery", category: "pottery", region: "Khurja, Uttar Pradesh", query: "khurja pottery ceramic india" },
-  { id: "black-pottery-nizamabad", name: "Nizamabad Black Pottery", category: "pottery", region: "Nizamabad, Uttar Pradesh", query: "nizamabad black pottery" },
-  { id: "molela-terracotta-plaque", name: "Molela Terracotta Plaque", category: "pottery", region: "Molela, Rajasthan", query: "molela terracotta plaque rajasthan" },
-  { id: "goalpara-black-pottery", name: "Goalpara Pottery", category: "pottery", region: "Goalpara, Assam", query: "goalpara pottery assam" },
-  { id: "kutch-pottery", name: "Kutch Painted Pottery", category: "pottery", region: "Kutch, Gujarat", query: "kutch pottery painted gujarat" },
-
-  // Metalwork
-  { id: "bastar-dhokra-jewelry", name: "Bastar Dhokra Jewelry", category: "jewelry", region: "Bastar, Chhattisgarh", query: "bastar dhokra jewelry" },
-  { id: "moradabad-brassware", name: "Moradabad Brassware", category: "home-decor", region: "Moradabad, Uttar Pradesh", query: "moradabad brass handicraft" },
-  { id: "thatheras-copper", name: "Thatheras Hammered Copperware", category: "household", region: "Jandiala Guru, Punjab", query: "thatheras copper craft punjab" },
-  { id: "bell-metal-craft-kerala", name: "Kerala Bell Metal Lamp", category: "home-decor", region: "Kerala", query: "bell metal lamp kerala nilavilakku" },
-
-  // Jewelry
-  { id: "kundan-jewelry", name: "Kundan Jewelry Set", category: "jewelry", region: "Rajasthan", query: "kundan jewelry rajasthan traditional" },
-  { id: "temple-jewelry", name: "South Indian Temple Jewelry", category: "jewelry", region: "Tamil Nadu", query: "temple jewelry south india traditional" },
-  { id: "lac-bangles", name: "Lac Bangles", category: "jewelry", region: "Rajasthan", query: "lac bangles rajasthan craft" },
-  { id: "oxidised-silver-jewelry", name: "Oxidised Silver Tribal Jewelry", category: "jewelry", region: "Rajasthan", query: "oxidised silver tribal jewelry india" },
-  { id: "terracotta-jewelry", name: "Terracotta Jewelry Set", category: "jewelry", region: "West Bengal", query: "terracotta jewelry handmade india" },
-  { id: "beaded-tribal-necklace", name: "Naga Tribal Beaded Necklace", category: "jewelry", region: "Nagaland", query: "naga tribal beaded necklace" },
+  // Famous sarees not yet covered
+  { id: "patola-saree", name: "Patan Patola Double-Ikat Saree", category: "fabric", region: "Patan, Gujarat", query: "patola saree patan gujarat" },
+  { id: "kasavu-saree", name: "Kerala Kasavu Saree", category: "fabric", region: "Kerala", query: "kasavu saree kerala gold border" },
+  { id: "ilkal-saree", name: "Ilkal Saree", category: "fabric", region: "Ilkal, Karnataka", query: "ilkal saree karnataka" },
+  { id: "baluchari-saree", name: "Baluchari Silk Saree", category: "fabric", region: "West Bengal", query: "baluchari saree bengal silk" },
+  { id: "maheshwari-saree", name: "Maheshwari Saree", category: "fabric", region: "Maheshwar, Madhya Pradesh", query: "maheshwari saree madhya pradesh" },
+  { id: "gadwal-saree", name: "Gadwal Silk Saree", category: "fabric", region: "Gadwal, Telangana", query: "gadwal saree telangana silk" },
+  { id: "tant-saree", name: "Bengal Tant Cotton Saree", category: "fabric", region: "West Bengal", query: "tant saree bengal cotton handloom" },
+  { id: "himroo-fabric", name: "Himroo Woven Fabric", category: "fabric", region: "Aurangabad, Maharashtra", query: "himroo fabric aurangabad weave" },
+  { id: "tangaliya-weave", name: "Tangaliya Woven Shawl", category: "fabric", region: "Surendranagar, Gujarat", query: "tangaliya weave gujarat shawl" },
 
   // Paintings
-  { id: "warli-canvas-art", name: "Warli Tribal Art Canvas", category: "paintings", region: "Maharashtra", query: "warli painting canvas tribal art" },
-  { id: "phad-painting", name: "Phad Scroll Painting", category: "paintings", region: "Rajasthan", query: "phad painting rajasthan scroll" },
-  { id: "miniature-painting-rajasthan", name: "Rajasthani Miniature Painting", category: "paintings", region: "Udaipur, Rajasthan", query: "rajasthani miniature painting" },
-  { id: "kalighat-painting", name: "Kalighat Painting", category: "paintings", region: "Kolkata, West Bengal", query: "kalighat painting bengal" },
-  { id: "cheriyal-scroll-painting", name: "Cheriyal Scroll Painting", category: "paintings", region: "Telangana", query: "cheriyal scroll painting telangana" },
+  { id: "mysore-painting", name: "Mysore Traditional Painting", category: "paintings", region: "Mysore, Karnataka", query: "mysore painting karnataka traditional gold" },
+  { id: "kerala-mural-painting", name: "Kerala Mural Painting", category: "paintings", region: "Kerala", query: "kerala mural painting traditional temple" },
+  { id: "kangra-painting", name: "Kangra Miniature Painting", category: "paintings", region: "Kangra, Himachal Pradesh", query: "kangra painting himachal miniature" },
+  { id: "nirmal-painting", name: "Nirmal Painting", category: "paintings", region: "Nirmal, Telangana", query: "nirmal painting telangana gold" },
+  { id: "patachitra-palm-leaf", name: "Odisha Palm Leaf Etching", category: "paintings", region: "Odisha", query: "palm leaf etching odisha patachitra" },
 
-  // Woodwork & toys
-  { id: "saharanpur-wood-carving", name: "Saharanpur Wood Carving", category: "woodwork-toys", region: "Saharanpur, Uttar Pradesh", query: "saharanpur wood carving craft" },
-  { id: "sandalwood-carving", name: "Mysore Sandalwood Carving", category: "woodwork-toys", region: "Mysore, Karnataka", query: "mysore sandalwood carving" },
-  { id: "etikoppaka-wooden-toys", name: "Etikoppaka Lacquer Toys", category: "woodwork-toys", region: "Etikoppaka, Andhra Pradesh", query: "etikoppaka wooden toys lacquer" },
-  { id: "wooden-elephant-carving", name: "Carved Wooden Elephant", category: "home-decor", region: "Kerala", query: "carved wooden elephant kerala craft" },
+  // Jewelry
+  { id: "thewa-jewelry", name: "Thewa Gold Jewelry", category: "jewelry", region: "Pratapgarh, Rajasthan", query: "thewa jewelry rajasthan gold glass" },
+  { id: "polki-jewelry", name: "Polki Uncut Diamond Jewelry", category: "jewelry", region: "Rajasthan", query: "polki jewelry rajasthan uncut diamond" },
+  { id: "bengal-filigree-jewelry", name: "Bengal Silver Filigree Jewelry", category: "jewelry", region: "West Bengal", query: "bengal filigree silver jewelry india" },
+  { id: "coorg-coin-necklace", name: "Coorg Coin Necklace", category: "jewelry", region: "Coorg, Karnataka", query: "coorg coin necklace kodagu karnataka" },
+  { id: "adivasi-bead-jewelry", name: "Adivasi Tribal Bead Jewelry", category: "jewelry", region: "Central India", query: "adivasi tribal bead jewelry india" },
 
-  // Home decor / misc craft
-  { id: "rajasthani-puppet-decor", name: "Rajasthani Puppet Wall Decor", category: "home-decor", region: "Rajasthan", query: "rajasthani puppet decor kathputli" },
-  { id: "channapatna-toy-set-2", name: "Channapatna Lacquerware Set", category: "home-decor", region: "Karnataka", query: "channapatna lacquerware toys" },
-  { id: "aranmula-mirror", name: "Aranmula Kannadi Metal Mirror", category: "home-decor", region: "Aranmula, Kerala", query: "aranmula mirror kerala metal" },
-  { id: "kondapalli-toys-2", name: "Kondapalli Bommalu Toys", category: "woodwork-toys", region: "Andhra Pradesh", query: "kondapalli bommalu toys" },
-  { id: "meenakari-plate", name: "Meenakari Enamel Plate", category: "home-decor", region: "Rajasthan", query: "meenakari enamel plate rajasthan" },
-  { id: "pashmina-embroidered-stole", name: "Kashmiri Embroidered Stole", category: "fabric", region: "Kashmir", query: "kashmiri embroidered stole pashmina" },
-  { id: "cane-basket-northeast", name: "Northeast India Cane Basket", category: "household", region: "Manipur/Nagaland", query: "cane basket weaving northeast india" },
-  { id: "coir-craft-kerala", name: "Kerala Coir Craft Mat", category: "household", region: "Kerala", query: "coir craft kerala handicraft" },
-  { id: "brass-diya-set-2", name: "Traditional Brass Diya Set", category: "home-decor", region: "India", query: "brass diya oil lamp traditional india" },
-  { id: "clay-idol-craft", name: "Kumartuli Clay Idol Craft", category: "home-decor", region: "Kolkata, West Bengal", query: "kumartuli clay idol craft kolkata" },
-  { id: "seashell-craft", name: "Seashell Craft Decor", category: "home-decor", region: "Odisha coast", query: "seashell craft decor india" },
-  { id: "horn-craft-kerala", name: "Buffalo Horn Craft", category: "home-decor", region: "Kerala", query: "buffalo horn craft kerala handicraft" },
+  // Home decor / crafts
+  { id: "lippan-mud-mirror-art", name: "Lippan Mud Mirror Wall Art", category: "home-decor", region: "Kutch, Gujarat", query: "lippan art kutch mud mirror" },
+  { id: "pipli-applique-work", name: "Pipli Applique Wall Hanging", category: "home-decor", region: "Pipli, Odisha", query: "pipli applique work odisha" },
+  { id: "kashmiri-papier-mache-ornament", name: "Kashmiri Papier-Mache Ornament", category: "home-decor", region: "Kashmir", query: "kashmiri papier mache ornament craft" },
+  { id: "thanjavur-plate", name: "Thanjavur Art Plate", category: "home-decor", region: "Thanjavur, Tamil Nadu", query: "thanjavur art plate tamil nadu" },
+  { id: "bidri-hookah", name: "Bidri Ware Hookah Base", category: "home-decor", region: "Bidar, Karnataka", query: "bidriware hookah bidar karnataka" },
+  { id: "channapatna-bangles", name: "Channapatna Lacquer Bangles", category: "jewelry", region: "Channapatna, Karnataka", query: "channapatna lacquer bangles" },
+  { id: "sikki-grass-craft", name: "Sikki Grass Craft Basket", category: "household", region: "Bihar", query: "sikki grass craft bihar basket" },
+  { id: "nettur-petti-box", name: "Nettur Petti Wooden Box", category: "home-decor", region: "Kerala", query: "nettur petti wooden box kerala" },
+
+  // Woodwork
+  { id: "varanasi-wooden-toys", name: "Varanasi Wooden Toys", category: "woodwork-toys", region: "Varanasi, Uttar Pradesh", query: "varanasi wooden toys craft" },
+  { id: "rosewood-inlay-mysore", name: "Mysore Rosewood Inlay Box", category: "home-decor", region: "Mysore, Karnataka", query: "mysore rosewood inlay box" },
+  { id: "bastar-wood-carving", name: "Bastar Wood Carving", category: "woodwork-toys", region: "Bastar, Chhattisgarh", query: "bastar wood carving chhattisgarh" },
+
+  // Leather / misc
+  { id: "rajasthani-leather-jutti", name: "Rajasthani Leather Jutti", category: "uncategorized", region: "Jodhpur, Rajasthan", query: "rajasthani jutti leather jodhpur" },
+  { id: "kutch-leather-craft", name: "Kutch Leather Craft Bag", category: "uncategorized", region: "Kutch, Gujarat", query: "kutch leather craft bag gujarat" },
+
+  // More fabric/textile variety
+  { id: "khadi-silk-stole", name: "Khadi Silk Stole", category: "fabric", region: "India", query: "khadi silk stole handspun" },
+  { id: "batik-print-fabric", name: "Batik Print Fabric", category: "fabric", region: "West Bengal/Gujarat", query: "batik print fabric india wax" },
+  { id: "chamba-rumal", name: "Chamba Rumal Embroidery", category: "fabric", region: "Chamba, Himachal Pradesh", query: "chamba rumal embroidery himachal" },
+  { id: "kasuti-embroidery", name: "Kasuti Embroidered Fabric", category: "fabric", region: "Karnataka", query: "kasuti embroidery karnataka" },
+  { id: "manipuri-shawl", name: "Manipuri Handloom Shawl", category: "fabric", region: "Manipur", query: "manipuri handloom shawl weave" },
+
+  // Pottery / metal
+  { id: "jaipur-blue-pottery-tile", name: "Jaipur Blue Pottery Tile", category: "home-decor", region: "Jaipur, Rajasthan", query: "jaipur blue pottery tile" },
+  { id: "kashmiri-copper-samovar", name: "Kashmiri Copper Samovar", category: "household", region: "Kashmir", query: "kashmiri copper samovar craft" },
+  { id: "kerala-brass-uruli", name: "Kerala Brass Uruli", category: "household", region: "Kerala", query: "kerala brass uruli vessel" },
 ];
 
 async function fetchCandidates(query: string) {
