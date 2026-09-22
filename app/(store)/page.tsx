@@ -40,6 +40,7 @@ export default async function HomePage() {
           alt="Artisan at a handloom"
           fill
           priority
+          sizes="100vw"
           className="object-cover object-[70%_center]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
@@ -78,6 +79,7 @@ export default async function HomePage() {
                   src={CATEGORY_IMAGES[category.slug] ?? `https://picsum.photos/seed/${category.slug}/200/200`}
                   alt={category.name}
                   fill
+                  sizes="80px"
                   className="object-cover"
                 />
               </div>
@@ -119,7 +121,7 @@ export default async function HomePage() {
           <div className="grid gap-6 rounded-lg border border-border bg-white p-6 md:grid-cols-2">
             <div className="relative aspect-square overflow-hidden rounded-lg">
               {deal.images[0] && (
-                <Image src={deal.images[0].url} alt={deal.name} fill className="object-cover" />
+                <Image src={deal.images[0].url} alt={deal.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
               )}
             </div>
             <div className="flex flex-col justify-center">
@@ -138,7 +140,13 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid items-center gap-6 md:grid-cols-2">
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <Image src="/images/artisan-story.jpg" alt="Artisan hand-carving woodwork" fill className="object-cover" />
+            <Image
+              src="/images/artisan-story.jpg"
+              alt="Artisan hand-carving woodwork"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
           </div>
           <div>
             <h2 className="mb-3 text-2xl font-bold">Our Artisan Story</h2>

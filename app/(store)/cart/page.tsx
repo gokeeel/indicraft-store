@@ -50,7 +50,7 @@ export default async function CartPage() {
             <li key={item.id} className="flex gap-4 rounded-lg border border-border bg-white p-4">
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md">
                 {item.product.images[0] && (
-                  <Image src={item.product.images[0].url} alt={item.product.name} fill className="object-cover" />
+                  <Image src={item.product.images[0].url} alt={item.product.name} fill sizes="80px" className="object-cover" />
                 )}
               </div>
               <div className="flex-1 space-y-2">

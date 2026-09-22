@@ -25,7 +25,13 @@ export function ProductQuickView({
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="relative aspect-square overflow-hidden rounded-lg bg-white">
             {product.images[0] && (
-              <Image src={product.images[0].url} alt={product.images[0].altText ?? product.name} fill className="object-cover" />
+              <Image
+                src={product.images[0].url}
+                alt={product.images[0].altText ?? product.name}
+                fill
+                sizes="(max-width: 640px) 100vw, 320px"
+                className="object-cover"
+              />
             )}
           </div>
           <div>

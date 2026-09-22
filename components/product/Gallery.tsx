@@ -20,12 +20,21 @@ export function Gallery({ images, name }: { images: { url: string; altText: stri
               i === active ? "border-primary" : "border-border"
             }`}
           >
-            <Image src={img.url} alt={img.altText ?? name} fill className="object-cover" />
+            <Image src={img.url} alt={img.altText ?? name} fill sizes="64px" className="object-cover" />
           </button>
         ))}
       </div>
       <div className="relative aspect-square flex-1 overflow-hidden rounded-lg bg-white">
-        {current && <Image src={current.url} alt={current.altText ?? name} fill className="object-cover" priority />}
+        {current && (
+          <Image
+            src={current.url}
+            alt={current.altText ?? name}
+            fill
+            sizes="(max-width: 640px) 100vw, 50vw"
+            className="object-cover"
+            priority
+          />
+        )}
       </div>
     </div>
   );
