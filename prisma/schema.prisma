@@ -96,6 +96,12 @@ model ProductImage {
   position  Int     @default(0)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
+
+  // Openly-licensed (CC BY / CC BY-SA) sourced photos require visible attribution wherever
+  // the image is displayed -- null for the original brand-asset photos, which need none.
+  imageCreator   String?
+  imageLicense   String?
+  imageSourceUrl String?
 }
 
 model Cart {

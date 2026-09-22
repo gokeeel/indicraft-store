@@ -9,6 +9,8 @@ const categories = [
   { name: "Household", slug: "household" },
   { name: "Mugs", slug: "mugs" },
   { name: "Spices", slug: "spices" },
+  { name: "Jewelry", slug: "jewelry" },
+  { name: "Paintings", slug: "paintings" },
   { name: "Gifts & Accessories", slug: "uncategorized" },
 ];
 
@@ -51,6 +53,37 @@ const REAL_PRODUCT_IMAGES: Record<string, string> = {
   "jute-lunch-bag": "jute-lunch-bag.webp",
   "traditional-wooden-puzzle": "traditional-wooden-puzzle.jpg",
   "wooden-rocking-horse": "wooden-rocking-horse.webp",
+  "kutch-mirror-work-shawl": "kutch-mirror-work-shawl.jpg",
+  "chikankari-embroidery-fabric": "chikankari-embroidery-fabric.jpg",
+  "cuttack-silver-filigree-earrings": "cuttack-silver-filigree-earrings.jpg",
+  "pichwai-painting-shrinathji": "pichwai-painting-shrinathji.jpg",
+  "longpi-black-pottery-pot": "longpi-black-pottery-pot.jpg",
+  "pochampally-ikat-saree": "pochampally-ikat-saree.jpg",
+  "sambalpuri-ikat-saree": "sambalpuri-ikat-saree.jpg",
+  "kalamkari-hand-painted-cloth": "kalamkari-hand-painted-cloth.jpg",
+  "mekhela-chador-assam": "mekhela-chador-assam.jpg",
+  "bell-metal-nilavilakku-set": "bell-metal-nilavilakku-set.jpg",
+  "lac-bangles-rajasthan": "lac-bangles-making.jpg",
+  "aranmula-kannadi-mirror": "aranmula-kannadi-mirror.jpg",
+};
+
+// Openly-licensed (CC BY / CC BY-SA) photos sourced via Openverse from Wikimedia Commons and
+// Flickr -- both licenses legally require visible attribution wherever the image is used, so
+// this isn't just record-keeping: ProductGallery/product pages read this and render a credit
+// line. Keyed by the same slug as REAL_PRODUCT_IMAGES.
+const IMAGE_ATTRIBUTION: Record<string, { creator: string; license: string; sourceUrl: string }> = {
+  "kutch-mirror-work-shawl": { creator: "RubyGoes", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/61997808@N00/4195734357" },
+  "chikankari-embroidery-fabric": { creator: "Bundleofemotions", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=146764857" },
+  "cuttack-silver-filigree-earrings": { creator: "SpeakingArch", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=191910814" },
+  "pichwai-painting-shrinathji": { creator: "Karodimal/Kajodimal Ratan Lal", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=138706341" },
+  "longpi-black-pottery-pot": { creator: "Atcelsius", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=94272237" },
+  "pochampally-ikat-saree": { creator: "Ramkumar Kalyani", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=155536146" },
+  "sambalpuri-ikat-saree": { creator: "Lincon Mishra", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=15186413" },
+  "kalamkari-hand-painted-cloth": { creator: "rajaraman sundaram", license: "CC BY 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=60342338" },
+  "mekhela-chador-assam": { creator: "Chiring chandan", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=99144172" },
+  "bell-metal-nilavilakku-set": { creator: "Akhilan", license: "CC BY-SA 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=14838042" },
+  "lac-bangles-rajasthan": { creator: "Goutam1962", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=129224724" },
+  "aranmula-kannadi-mirror": { creator: "Prasanth Prakash", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=101277121" },
 };
 
 type SeedProduct = {
@@ -85,7 +118,7 @@ const products: SeedProduct[] = [
 
   { name: "Dhokra Brass Tribal Figurine", category: "home-decor", price: 1450, material: "Brass (Dhokra)", region: "Chhattisgarh", stock: 18,
     description: "Cast using the 4,000-year-old lost-wax dhokra technique practiced by Chhattisgarh's tribal metalworkers — each figurine starts as a wax model wrapped in clay, then the wax is melted out and molten brass poured in, making every piece one-of-a-kind." },
-  { name: "Madhubani Painting - Peacock", category: "home-decor", price: 2200, material: "Handmade Paper, Natural Dyes", region: "Bihar", stock: 9,
+  { name: "Madhubani Painting - Peacock", category: "paintings", price: 2200, material: "Handmade Paper, Natural Dyes", region: "Bihar", stock: 9,
     description: "Hand-painted in the Madhubani (Mithila) style from Bihar, using natural pigments and fine double-line borders around a peacock motif — a folk art tradition historically painted by women on the walls of their homes." },
   { name: "Blue Pottery Decorative Vase", category: "home-decor", price: 1750, salePrice: 1400, material: "Quartz Ceramic", region: "Jaipur, Rajasthan", stock: 14,
     description: "Jaipur's signature blue pottery, made from a quartz-based ceramic (no clay) that gives the glaze its distinctive cobalt-and-white finish — a craft originally brought to Rajasthan via Persian and Mongol influence." },
@@ -95,7 +128,7 @@ const products: SeedProduct[] = [
     description: "Turned and lacquered by Channapatna's woodturners using ivory wood and vegetable dyes, a GI-tagged craft tradition over 200 years old. Smooth, rounded, and safe for small hands." },
   { name: "Pattachitra Hand-Painted Plate", category: "home-decor", price: 1950, material: "Palm Leaf", region: "Odisha", stock: 11,
     description: "Pattachitra artists from Odisha hand-paint mythological scenes onto a treated palm-leaf-and-cloth base using natural stone and mineral pigments, then finish with a lacquer coating for durability." },
-  { name: "Rogan Art Wall Panel", category: "home-decor", price: 3200, material: "Castor Oil Paint on Cloth", region: "Kutch, Gujarat", stock: 6,
+  { name: "Rogan Art Wall Panel", category: "paintings", price: 3200, material: "Castor Oil Paint on Cloth", region: "Kutch, Gujarat", stock: 6,
     description: "Rogan art is painted freehand with a stylus using thick castor-oil-based paint, drawn out from a metal cup rather than brushed — one of the rarest surviving textile art forms in India, kept alive by a handful of families in Nirona, Kutch." },
   { name: "Terracotta Wall Mask", category: "home-decor", price: 1050, material: "Terracotta", region: "West Bengal", stock: 20,
     description: "Hand-shaped and kiln-fired terracotta wall mask from rural West Bengal, a folk craft tradition rooted in temple architecture and village ritual art." },
@@ -178,7 +211,7 @@ const products: SeedProduct[] = [
     description: "Woven from dried palm leaf strips by artisans in Tamil Nadu — a lightweight, biodegradable table-mat tradition common across South India's coastal regions." },
   { name: "Hand Painted Coasters Set", category: "home-decor", price: 620, material: "Wood", region: "Rajasthan", stock: 28,
     description: "A set of wooden coasters hand-painted with traditional Rajasthani floral motifs, each one painted individually so no two sets are perfectly identical." },
-  { name: "Tribal Silver Jewelry Set", category: "uncategorized", price: 3400, material: "Silver", region: "Rajasthan", occasion: "Festive", stock: 8,
+  { name: "Tribal Silver Jewelry Set", category: "jewelry", price: 3400, material: "Silver", region: "Rajasthan", occasion: "Festive", stock: 8,
     description: "Oxidised silver jewellery set handcrafted by tribal silversmiths in Rajasthan, using traditional stamping and filigree techniques passed down within artisan families for generations." },
   { name: "Bamboo Table Lamp", category: "home-decor", price: 1450, material: "Bamboo", region: "Tripura", stock: 15,
     description: "Handwoven bamboo lamp shade over a wooden base, made by artisans in Tripura using split-bamboo weaving techniques traditionally used for baskets and screens." },
@@ -196,6 +229,34 @@ const products: SeedProduct[] = [
     description: "A hand-carved wooden puzzle from Channapatna, finished with the same natural lacquer and vegetable dyes used in the town's famous wooden toy tradition." },
   { name: "Wooden Rocking Horse", category: "home-decor", price: 2400, material: "Wood", region: "Channapatna, Karnataka", occasion: "Kids", stock: 9,
     description: "A hand-turned and lacquered wooden rocking horse from Channapatna's toy workshops, made using the same lightweight ivory wood and child-safe vegetable dyes the region is known for." },
+
+  // Catalog-expansion batch: real openly-licensed photos (Openverse -> Wikimedia Commons/Flickr,
+  // commercial-safe licenses only), sourced and hand-reviewed for accuracy against each item's
+  // real craft tradition rather than matched by title alone.
+  { name: "Kutch Mirror-Work Embroidered Shawl", category: "fabric", price: 2800, material: "Wool, Mirror-work", region: "Kutch, Gujarat", occasion: "Festive", stock: 10,
+    description: "Hand-embroidered woolen shawl from Kutch, Gujarat, using the region's signature abhla (mirror-work) technique -- small mirrors stitched into dense floral embroidery, traditionally worn during festivals and weddings." },
+  { name: "Chikankari Hand-Embroidered Fabric", category: "fabric", price: 1450, material: "Cotton", region: "Lucknow, Uttar Pradesh", stock: 24,
+    description: "White-on-white shadow embroidery from Lucknow, stitched entirely by hand using a wooden hoop -- one of India's most delicate embroidery traditions, dating back to the Mughal court." },
+  { name: "Pochampally Ikat Saree", category: "fabric", price: 3600, salePrice: 3100, material: "Silk-Cotton", region: "Pochampally, Telangana", occasion: "Wedding", stock: 9,
+    description: "Double-ikat weave from Pochampally, Telangana, where both the warp and weft threads are tie-dyed before weaving so the geometric diamond pattern emerges from the fabric itself -- a slower, more exacting technique than single-ikat." },
+  { name: "Sambalpuri Ikat Saree", category: "fabric", price: 3900, material: "Silk", region: "Sonepur, Odisha", occasion: "Festive", stock: 8,
+    description: "Handwoven Sambalpuri saree from Odisha, known for its bandha (tie-dye) technique and traditional motifs like the shankha (conch) and chakra (wheel) woven directly into the fabric." },
+  { name: "Kalamkari Hand-Painted Wall Cloth", category: "home-decor", price: 2100, material: "Cotton", region: "Srikalahasti, Andhra Pradesh", stock: 11,
+    description: "Entirely hand-painted (not block-printed) kalamkari cloth from Srikalahasti, using a bamboo pen and natural dyes to freehand mythological and floral motifs -- a slower, more painterly variant of the kalamkari tradition." },
+  { name: "Assam Muga Silk Mekhela Chador", category: "fabric", price: 5200, material: "Muga Silk", region: "Assam", occasion: "Festive", stock: 6,
+    description: "Traditional two-piece Assamese garment woven from muga silk, a golden-sheened wild silk unique to Assam that grows more lustrous with each wash -- prized enough to have its own GI tag separate from other silks." },
+  { name: "Kerala Bell Metal Nilavilakku Set", category: "home-decor", price: 1600, material: "Bell Metal", region: "Kerala", occasion: "Festive", stock: 15,
+    description: "Traditional Kerala oil lamps cast in bell metal, sold as a graduated set -- nilavilakku are lit daily in many Kerala households and are a fixture of temple and wedding rituals across the state." },
+  { name: "Rajasthani Lac Bangles (Set)", category: "jewelry", price: 650, material: "Lac, Glass", region: "Rajasthan", occasion: "Festive", stock: 30,
+    description: "Hand-molded lac bangles from Rajasthan -- lac resin is heated, shaped by hand around a metal rod, and studded with mirrors or stones while still warm, a technique little-changed for generations." },
+  { name: "Cuttack Silver Filigree Earrings", category: "jewelry", price: 2400, material: "Silver", region: "Cuttack, Odisha", occasion: "Wedding", stock: 12,
+    description: "Tarakasi (silver filigree) earrings from Cuttack, made by drawing silver into fine wire and hand-coiling it into intricate openwork patterns -- a GI-tagged craft over a thousand years old." },
+  { name: "Pichwai Painting - Shrinathji", category: "paintings", price: 4200, material: "Cloth, Natural Pigment", region: "Nathdwara, Rajasthan", stock: 5,
+    description: "Traditional pichwai painting from Nathdwara depicting Shrinathji, hand-painted on cloth in the elaborate devotional style used to backdrop temple shrines -- rich in gold detailing and symbolic motifs." },
+  { name: "Aranmula Kannadi Metal Mirror", category: "home-decor", price: 3800, material: "Metal Alloy", region: "Aranmula, Kerala", stock: 7,
+    description: "Handmade metal-alloy mirror from Aranmula, Kerala -- unlike glass mirrors, the reflective surface is the polished metal itself, made from a closely-guarded family alloy recipe and GI-tagged to this one village." },
+  { name: "Longpi Black Pottery Cooking Pot", category: "household", price: 1900, material: "Black Serpentine Clay", region: "Longpi, Manipur", stock: 10,
+    description: "Hand-shaped cookware from Longpi, Manipur, made from black serpentine clay without a potter's wheel -- one of the few pottery traditions in India that skips the wheel entirely, shaped instead by hand and paddle." },
 ];
 
 function slugify(name: string) {
@@ -332,6 +393,7 @@ async function main() {
       },
     });
 
+    const attribution = IMAGE_ATTRIBUTION[slug];
     await prisma.productImage.deleteMany({ where: { productId: product.id } });
     await prisma.productImage.create({
       data: {
@@ -339,6 +401,9 @@ async function main() {
         url: REAL_PRODUCT_IMAGES[slug] ? `/images/products/${REAL_PRODUCT_IMAGES[slug]}` : `https://picsum.photos/seed/${slug}/600/600`,
         altText: p.name,
         position: 0,
+        imageCreator: attribution?.creator ?? null,
+        imageLicense: attribution?.license ?? null,
+        imageSourceUrl: attribution?.sourceUrl ?? null,
       },
     });
   }
