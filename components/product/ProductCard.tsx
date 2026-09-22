@@ -23,6 +23,13 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       </div>
       <div className="mt-2">
         <h3 className="line-clamp-1 text-sm font-medium">{product.name}</h3>
+        {(product.artisan || product.region) && (
+          <p className="line-clamp-1 text-xs text-muted">
+            {product.artisan}
+            {product.artisan && product.region && " · "}
+            {product.region}
+          </p>
+        )}
         <PriceDisplay price={product.price} salePrice={product.salePrice} />
       </div>
     </Link>

@@ -70,6 +70,10 @@ model Product {
   material    String?
   region      String?
   occasion    String?
+  // Per-product artisan/co-op name -- distinct from `vendor`, which is the storefront
+  // account the product is listed under, not the individual maker. See UX_STANDARDS.md
+  // Section 10.4 (Artisan Information).
+  artisan     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -205,6 +205,38 @@ function slugify(name: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+// Representative artisan names, loosely regionalized so a product's maker name is at least
+// culturally consistent with its stated craft region. This is prototype/demo content per
+// UX_STANDARDS.md Section 3 ("[P] Prototype enhancement") and Section 37 (clearly representative,
+// not a claim of a verified individual) -- not scraped or claimed as real identified people.
+const ARTISAN_POOLS: Record<string, string[]> = {
+  rajasthan: ["Radhika Sharma", "Mohan Lal Kumhar", "Sunita Devi", "Girdhari Lal"],
+  gujarat: ["Bhavna Rabari", "Ismail Khatri", "Meera Ben", "Jagdish Vankar"],
+  "west bengal": ["Alok Das", "Soma Karmakar", "Rina Bibi", "Provat Chandra Pal"],
+  karnataka: ["Krishnamurthy Rao", "Lakshmi Achar", "Manjunath Gowda"],
+  odisha: ["Bijay Maharana", "Sarita Pattnaik", "Duryodhan Sahoo"],
+  bihar: ["Sita Devi", "Baua Devi", "Manisha Jha"],
+  maharashtra: ["Jivya Soma Mashe", "Anita Bhoye", "Ramesh Pardhi"],
+  "tamil nadu": ["Kannan Murugesan", "Lakshmi Raman", "Selvam Pillai"],
+  kerala: ["Radhakrishnan Nair", "Saramma Thomas", "Vinod Kumar"],
+  assam: ["Bhaskar Das", "Rita Gogoi", "Pranab Boro"],
+  chhattisgarh: ["Sonabai Rajwar", "Jaidev Baghel", "Mangli Bai"],
+  punjab: ["Harpreet Kaur", "Amarjeet Singh", "Simranjit Kaur"],
+  nagaland: ["Aküm Longchari", "Vimenuo Kire", "Toshi Ao"],
+  telangana: ["Lakshmamma", "Ravi Chakali", "Padma Yadav"],
+  "madhya pradesh": ["Kailash Chandra", "Gyarasi Bai", "Ramgopal Verma"],
+  "andhra pradesh": ["Niranjan Reddy", "Subbalakshmi", "Venkataramana"],
+  "uttar pradesh": ["Iqbal Ansari", "Kamla Devi", "Rajendra Prasad Saini"],
+  kashmir: ["Ghulam Mohammad Wani", "Zeba Jan", "Bashir Ahmad"],
+  tripura: ["Debasish Debbarma", "Rina Tripura", "Sanjib Reang"],
+};
+
+function artisanFor(region: string, index: number): string {
+  const key = Object.keys(ARTISAN_POOLS).find((k) => region.toLowerCase().includes(k));
+  const pool = key ? ARTISAN_POOLS[key] : ["Artisan Collective Member"];
+  return pool[index % pool.length];
+}
+
 async function main() {
   for (const c of categories) {
     await prisma.category.upsert({
@@ -267,6 +299,7 @@ async function main() {
     const slug = slugify(p.name);
     const vendor = i % 2 === 0 ? vendor1 : vendor2;
     const category = categoryBySlug[p.category];
+    const artisan = artisanFor(p.region, i);
     const product = await prisma.product.upsert({
       where: { slug },
       // Re-running the seed should refresh content (descriptions, prices, stock) on existing
@@ -280,6 +313,7 @@ async function main() {
         material: p.material,
         region: p.region,
         occasion: p.occasion ?? null,
+        artisan,
         categoryId: category.id,
       },
       create: {
@@ -292,6 +326,7 @@ async function main() {
         material: p.material,
         region: p.region,
         occasion: p.occasion ?? null,
+        artisan,
         vendorId: vendor.id,
         categoryId: category.id,
       },

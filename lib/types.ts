@@ -9,6 +9,8 @@ export type ProductSummary = {
   price: Money;
   salePrice: Money | null;
   stock: number;
+  region: string | null;
+  artisan: string | null;
   category: { name: string; slug: string };
   images: { url: string; altText: string | null }[];
 };

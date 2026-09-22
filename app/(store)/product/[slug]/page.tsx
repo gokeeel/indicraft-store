@@ -66,7 +66,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <h1 className="text-2xl font-bold">{product.name}</h1>
             <WishlistButton productId={product.id} initialSaved={!!wishlisted} />
           </div>
-          <p className="mt-1 text-sm text-muted">Sold by {product.vendor.storeName}</p>
+          <p className="mt-1 text-sm text-muted">
+            Sold by {product.vendor.storeName}
+            {product.artisan && <> · Made by {product.artisan}</>}
+          </p>
 
           <div className="mt-4 text-lg">
             <PriceDisplay price={product.price} salePrice={product.salePrice} />
