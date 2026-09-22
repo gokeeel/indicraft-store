@@ -3,8 +3,19 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { VoiceButton } from "@/components/agent/VoiceButton";
 
-export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
+export function ChatInput({
+  onSend,
+  onSendVoice,
+  disabled,
+  isProcessingVoice,
+}: {
+  onSend: (text: string) => void;
+  onSendVoice: (audioBlob: Blob) => void;
+  disabled?: boolean;
+  isProcessingVoice?: boolean;
+}) {
   const [value, setValue] = useState("");
 
   return (
@@ -25,6 +36,7 @@ export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void
         disabled={disabled}
         aria-label="Message Venmathi"
       />
+      <VoiceButton onAudioCaptured={onSendVoice} isProcessing={!!isProcessingVoice} disabled={disabled} />
       <Button type="submit" disabled={disabled || !value.trim()}>
         Send
       </Button>

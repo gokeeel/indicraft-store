@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Volume2 } from "lucide-react";
 import { BlockRenderer } from "@/components/agent/BlockRenderer";
 import { TypingIndicator } from "@/components/agent/TypingIndicator";
 import { cn } from "@/lib/utils";
 import type { ChatEntry } from "@/lib/agent/client-types";
+
+function playAudio(base64: string) {
+  new Audio(`data:audio/mp3;base64,${base64}`).play().catch(() => {
+    // Autoplay blocked or playback failed — the "Play again" button lets the user retry.
+  });
+}
 
 export function MessageList({
   entries,
@@ -40,7 +47,19 @@ export function MessageList({
           ) : (
             <div className="max-w-[92%]">
               {entry.content && (
-                <div className="rounded-lg border border-border bg-white px-3 py-2 text-sm">{entry.content}</div>
+                <div className="flex items-start gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm">
+                  <span className="flex-1">{entry.content}</span>
+                  {entry.audio && (
+                    <button
+                      type="button"
+                      onClick={() => playAudio(entry.audio!)}
+                      aria-label="Play Venmathi's voice reply again"
+                      className="shrink-0 text-muted hover:text-foreground"
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               )}
               {entry.blocks.map((block, i) => (
                 <BlockRenderer

@@ -154,7 +154,12 @@ export class SarvamHttpLLM implements SarvamLLM {
 
 type DeltaToolCall = { index: number; id?: string; function?: { name?: string; arguments?: string } };
 
-async function fetchWithRetry(url: string, init: RequestInit, outerSignal?: AbortSignal, attempt = 0): Promise<Response> {
+export async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  outerSignal?: AbortSignal,
+  attempt = 0
+): Promise<Response> {
   const controller = new AbortController();
   const onAbort = () => controller.abort();
   outerSignal?.addEventListener("abort", onAbort);

@@ -34,6 +34,7 @@ export function AgentSidebar() {
     }
   });
   const [pending, setPending] = useState(false);
+  const [processingVoice, setProcessingVoice] = useState(false);
 
   useEffect(() => {
     try {
@@ -138,6 +139,50 @@ export function AgentSidebar() {
       if (!started) {
         setEntries((prev) => [...prev, { id: assistantId, role: "assistant", content: "", blocks: [] }]);
       }
+    }
+  }
+
+  // Push-to-talk: sends the recorded clip to the voice route (STT -> agent loop -> TTS in one
+  // round trip, unlike text which streams). The user bubble shows the transcript once it comes
+  // back, since we don't have it up front. Audio auto-plays — the mic tap is the interaction
+  // that unlocks autoplay for this response.
+  async function sendVoice(audioBlob: Blob) {
+    setProcessingVoice(true);
+    const form = new FormData();
+    form.append("audio", audioBlob, "voice.webm");
+    form.append("history", JSON.stringify(entries.map((e) => ({ role: e.role, content: e.content }))));
+
+    let res: Response;
+    try {
+      res = await fetch("/api/agent/voice", { method: "POST", body: form });
+    } catch {
+      setProcessingVoice(false);
+      setEntries((prev) => [
+        ...prev,
+        { id: makeId(), role: "assistant", content: "Oops, something glitched on my side. Try again?", blocks: [] },
+      ]);
+      return;
+    }
+
+    setProcessingVoice(false);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setEntries((prev) => [
+        ...prev,
+        { id: makeId(), role: "assistant", content: data.message ?? data.error ?? "Couldn't process your voice. Try again or type instead.", blocks: [] },
+      ]);
+      return;
+    }
+
+    setEntries((prev) => [
+      ...prev,
+      { id: makeId(), role: "user", content: data.userTranscript },
+      { id: makeId(), role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [], audio: data.assistantAudio ?? undefined },
+    ]);
+
+    if (data.assistantAudio) {
+      new Audio(`data:audio/mp3;base64,${data.assistantAudio}`).play().catch(() => {});
     }
   }
 
@@ -300,7 +345,7 @@ export function AgentSidebar() {
                   onRequestNewAddress={requestNewAddress}
                   onConfirmOrder={confirmOrder}
                 />
-                <ChatInput onSend={send} disabled={pending} />
+                <ChatInput onSend={send} onSendVoice={sendVoice} disabled={pending || processingVoice} isProcessingVoice={processingVoice} />
               </>
             )}
           </aside>
