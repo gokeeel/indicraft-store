@@ -2,22 +2,20 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
-export function ShopFilters({
-  categories,
-  min,
-  max,
-  materials,
-  regions,
-}: {
+type ShopFiltersProps = {
   categories: { name: string; slug: string; _count: { products: number } }[];
   min: number;
   max: number;
   materials: string[];
   regions: string[];
-}) {
+};
+
+function FilterFields({ categories, min, max, materials, regions }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [price, setPrice] = useState<[number, number]>([
@@ -36,7 +34,7 @@ export function ShopFilters({
   const activeCategory = searchParams.get("category") ?? "";
 
   return (
-    <aside className="space-y-6">
+    <div className="space-y-6">
       <div>
         <h3 className="mb-2 font-semibold">Category</h3>
         <ul className="space-y-1 text-sm">
@@ -110,6 +108,31 @@ export function ShopFilters({
           </SelectContent>
         </Select>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export function ShopFilters(props: ShopFiltersProps) {
+  return (
+    <>
+      {/* Section 23: "Filters can open in a bottom sheet or drawer" on mobile -- the sidebar
+          layout only ever existed at md+, so filters were previously just missing below that,
+          not merely hidden-and-recoverable. */}
+      <div className="md:hidden">
+        <Sheet>
+          <SheetTrigger className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium">
+            <SlidersHorizontal className="h-4 w-4" />
+            Filters
+          </SheetTrigger>
+          <SheetContent className="max-w-xs overflow-y-auto">
+            <SheetTitle className="mb-4 text-lg font-bold">Filters</SheetTitle>
+            <FilterFields {...props} />
+          </SheetContent>
+        </Sheet>
+      </div>
+      <aside className="hidden md:block">
+        <FilterFields {...props} />
+      </aside>
+    </>
   );
 }
