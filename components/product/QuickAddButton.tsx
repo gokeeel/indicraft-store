@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShoppingBag, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/lib/toast";
 
 export function QuickAddButton({ productId, inStock }: { productId: string; inStock: boolean }) {
   const router = useRouter();
+  const { show } = useToast();
   const [status, setStatus] = useState<"idle" | "loading" | "added" | "error">("idle");
 
   async function handleClick(e: React.MouseEvent) {
@@ -24,7 +26,13 @@ export function QuickAddButton({ productId, inStock }: { productId: string; inSt
       return;
     }
     setStatus(res.ok ? "added" : "error");
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      show("Added to cart");
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      show(typeof data.error === "string" ? data.error : "Couldn't add to cart", "error");
+    }
     setTimeout(() => setStatus("idle"), 2000);
   }
 

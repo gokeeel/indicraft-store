@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/lib/toast";
 
 export function WishlistButton({
   productId,
@@ -16,6 +17,7 @@ export function WishlistButton({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const { show } = useToast();
   const [saved, setSaved] = useState(initialSaved);
   const [loading, setLoading] = useState(false);
 
@@ -38,6 +40,7 @@ export function WishlistButton({
     }
     if (res.ok) {
       setSaved(!saved);
+      show(saved ? "Removed from wishlist" : "Saved to wishlist");
       router.refresh();
     }
   }
