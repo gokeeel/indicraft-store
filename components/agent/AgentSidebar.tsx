@@ -19,6 +19,14 @@ function makeId() {
     : Math.random().toString(36).slice(2);
 }
 
+// API error responses are documented as plain strings, but a malformed one (e.g. a raw Zod
+// error object) would otherwise get set directly as message content and crash the render —
+// React can't display an object as a child.
+function errorText(data: unknown, fallback: string): string {
+  const value = (data as { message?: unknown; error?: unknown } | null)?.message ?? (data as { error?: unknown } | null)?.error;
+  return typeof value === "string" ? value : fallback;
+}
+
 export function AgentSidebar() {
   const { open, setOpen, toggle } = useAgentPanel();
   const { data: session, status } = useSession();
@@ -84,7 +92,7 @@ export function AgentSidebar() {
         {
           id: makeId(),
           role: "assistant",
-          content: data.error ?? "Oops, something glitched on my side. Try again?",
+          content: errorText(data, "Oops, something glitched on my side. Try again?"),
           blocks: [],
         },
       ]);
@@ -170,7 +178,7 @@ export function AgentSidebar() {
     if (!res.ok) {
       setEntries((prev) => [
         ...prev,
-        { id: makeId(), role: "assistant", content: data.message ?? data.error ?? "Couldn't process your voice. Try again or type instead.", blocks: [] },
+        { id: makeId(), role: "assistant", content: errorText(data, "Couldn't process your voice. Try again or type instead."), blocks: [] },
       ]);
       return;
     }
@@ -199,7 +207,7 @@ export function AgentSidebar() {
       const data = await res.json().catch(() => ({}));
       setEntries((prev) => [
         ...prev,
-        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't add that to your cart.", blocks: [] },
+        { id: makeId(), role: "assistant", content: errorText(data, "Couldn't add that to your cart."), blocks: [] },
       ]);
       return;
     }
@@ -229,7 +237,7 @@ export function AgentSidebar() {
       const data = await res.json().catch(() => ({}));
       setEntries((prev) => [
         ...prev,
-        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't preview your order.", blocks: [] },
+        { id: makeId(), role: "assistant", content: errorText(data, "Couldn't preview your order."), blocks: [] },
       ]);
       return;
     }
@@ -258,7 +266,7 @@ export function AgentSidebar() {
       const data = await res.json().catch(() => ({}));
       setEntries((prev) => [
         ...prev,
-        { id: makeId(), role: "assistant", content: data.error ?? "Couldn't confirm your order.", blocks: [] },
+        { id: makeId(), role: "assistant", content: errorText(data, "Couldn't confirm your order."), blocks: [] },
       ]);
       return;
     }

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   const parsed = bodySchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
   // Trim to the last ~20 turns.
   const history = parsed.data.messages.slice(-20);
