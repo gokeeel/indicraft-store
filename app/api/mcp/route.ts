@@ -201,12 +201,36 @@ const handler = createMcpHandler(() => {
   return server;
 });
 
+// Some clients (e.g. Sarvam Indus/Samvaad) send every JSON-RPC field as a string, so `params`
+// arrives as a JSON-encoded string instead of an object. The MCP SDK's transport hard-rejects
+// that shape before it ever reaches our tools (-32600), so it has to be unwrapped here, in front
+// of handler.fetch() — the only place upstream of the SDK's own request parsing.
+async function normalizeStringifiedParams(request: NextRequest): Promise<Request> {
+  const text = await request.text();
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return new Request(request.url, { method: request.method, headers: request.headers, body: text });
+  }
+  if (body && typeof body === "object" && typeof (body as { params?: unknown }).params === "string") {
+    try {
+      (body as { params: unknown }).params = JSON.parse((body as { params: string }).params);
+    } catch {
+      // Leave it as-is — let the SDK reject it with its own error.
+    }
+  }
+  const headers = new Headers(request.headers);
+  headers.delete("content-length");
+  return new Request(request.url, { method: request.method, headers, body: JSON.stringify(body) });
+}
+
 // Public on purpose: Claude.ai's "Add custom connector" UI only takes a URL, no header field, so
 // anyone sharing this link needs it to work with no key. Every tool call is scoped to a throwaway
 // guest User (lib/services/guestSession.ts) and rate-limited (lib/agent/rateLimit.ts), and
 // Razorpay stays in test mode — never wire this same pattern to a real-account-bearing endpoint.
 export async function POST(request: NextRequest) {
-  return handler.fetch(request);
+  return handler.fetch(await normalizeStringifiedParams(request));
 }
 
 export async function GET(request: NextRequest) {
