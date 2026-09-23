@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDb } from "@/lib/prisma";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -27,11 +27,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
-  if (parsed.data.isDefault) {
-    await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
-  }
-  const result = await prisma.address.updateMany({ where: { id, userId }, data: parsed.data });
-  if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const result = await withDb(async () => {
+    if (parsed.data.isDefault) {
+      await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
+    }
+    return prisma.address.updateMany({ where: { id, userId }, data: parsed.data });
+  });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 503 });
+  if (result.data.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
 
@@ -40,6 +43,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  await prisma.address.deleteMany({ where: { id, userId } });
+  const result = await withDb(() => prisma.address.deleteMany({ where: { id, userId } }));
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 503 });
   return NextResponse.json({ ok: true });
 }

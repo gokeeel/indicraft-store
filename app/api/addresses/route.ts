@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDb } from "@/lib/prisma";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -22,8 +22,9 @@ async function requireUserId() {
 export async function GET() {
   const userId = await requireUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const addresses = await prisma.address.findMany({ where: { userId }, orderBy: { isDefault: "desc" } });
-  return NextResponse.json(addresses);
+  const result = await withDb(() => prisma.address.findMany({ where: { userId }, orderBy: { isDefault: "desc" } }));
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 503 });
+  return NextResponse.json(result.data);
 }
 
 export async function POST(req: NextRequest) {
@@ -33,9 +34,12 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
-  if (parsed.data.isDefault) {
-    await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
-  }
-  const address = await prisma.address.create({ data: { ...parsed.data, userId } });
-  return NextResponse.json(address, { status: 201 });
+  const result = await withDb(async () => {
+    if (parsed.data.isDefault) {
+      await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
+    }
+    return prisma.address.create({ data: { ...parsed.data, userId } });
+  });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 503 });
+  return NextResponse.json(result.data, { status: 201 });
 }
