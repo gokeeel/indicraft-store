@@ -45,7 +45,11 @@ export class SarvamHttpLLM implements SarvamLLM {
           messages,
           tools,
           tool_choice: "auto",
-          max_tokens: 600,
+          // sarvam-105b emits its chain-of-thought in a separate reasoning_content field before
+          // the real content/tool_calls -- 600 was sized for output alone and let reasoning eat
+          // the whole budget on harder turns, leaving finish_reason "length" with content: null
+          // and no tool call (a silent, un-repliable turn). Sized with headroom for both.
+          max_tokens: 1500,
           temperature: 0.3,
         }),
       },
@@ -84,7 +88,7 @@ export class SarvamHttpLLM implements SarvamLLM {
           messages,
           tools,
           tool_choice: "auto",
-          max_tokens: 600,
+          max_tokens: 1500,
           temperature: 0.3,
           stream: true,
         }),

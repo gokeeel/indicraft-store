@@ -18,7 +18,9 @@ export async function runAgentLoop(
     const result = await llm.chat({ messages, tools: TOOL_SCHEMAS });
 
     if (!result.toolCalls || result.toolCalls.length === 0) {
-      return { assistantText: result.text ?? "", blocks };
+      // A truncated/empty completion (e.g. the model's reasoning ate the whole token budget)
+      // must never surface as a silent, un-repliable turn -- always give the user something.
+      return { assistantText: result.text || FALLBACK_TEXT, blocks };
     }
 
     messages.push({
@@ -79,6 +81,9 @@ export async function* runAgentLoopStream(
     }
 
     if (!toolCalls || toolCalls.length === 0) {
+      // Same truncation guard as runAgentLoop: if nothing streamed as text and no tool was
+      // called, the turn produced nothing at all -- never leave the user with silence.
+      if (!assembledText) yield { type: "text", delta: FALLBACK_TEXT };
       yield { type: "blocks", blocks };
       return;
     }
