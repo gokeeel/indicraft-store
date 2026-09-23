@@ -69,6 +69,12 @@ const REAL_PRODUCT_IMAGES: Record<string, string> = {
   "pipli-applique-wall-hanging": "pipli-applique-wall-hanging.jpg",
   "chamba-rumal-embroidered-panel": "chamba-rumal-embroidery.jpg",
   "kasuti-embroidered-fabric": "kasuti-embroidered-fabric.jpg",
+  "batik-print-fabric": "batik-print-fabric.jpg",
+  "kolhapuri-leather-chappals": "kolhapuri-leather-chappals.jpg",
+  "assam-tea-garden-cinnamon-100g": "assam-tea-garden-cinnamon.jpg",
+  "wayanad-wild-turmeric-200g": "wayanad-wild-turmeric.jpg",
+  "kerala-green-cardamom-100g": "kerala-green-cardamom.jpg",
+  "copper-moscow-mule-mug": "copper-moscow-mule-mug.jpg",
 };
 
 // Openly-licensed (CC BY / CC BY-SA) photos sourced via Openverse from Wikimedia Commons and
@@ -92,6 +98,12 @@ const IMAGE_ATTRIBUTION: Record<string, { creator: string; license: string; sour
   "pipli-applique-wall-hanging": { creator: "andryn2006", license: "CC BY-SA 2.0", sourceUrl: "https://www.flickr.com/photos/84985982@N00/24847305973" },
   "chamba-rumal-embroidered-panel": { creator: "Fæ", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/50398299@N08/16215202147" },
   "kasuti-embroidered-fabric": { creator: "Priya", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=97359138" },
+  "batik-print-fabric": { creator: "museado", license: "CC0 1.0", sourceUrl: "https://www.flickr.com/photos/200781279@N05/53865795995" },
+  "kolhapuri-leather-chappals": { creator: "Pritam Sonone", license: "CC0 1.0", sourceUrl: "https://wordpress.org/photos/photo/160678607c/" },
+  "assam-tea-garden-cinnamon-100g": { creator: "trophygeek", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/65187097@N03/7309903584" },
+  "wayanad-wild-turmeric-200g": { creator: "Steenbergs", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/50310535@N03/6865121460" },
+  "kerala-green-cardamom-100g": { creator: "Misterneedlemouse", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=151971310" },
+  "copper-moscow-mule-mug": { creator: "Will Shenton", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=49675066" },
 };
 
 type SeedProduct = {
@@ -275,6 +287,8 @@ const products: SeedProduct[] = [
     description: "Double-satin-stitch embroidery from Chamba, Himachal Pradesh, worked so precisely that the same image appears identical on both sides of the cloth -- traditionally depicting mythological scenes, once presented as ceremonial gifts by Himalayan royal courts." },
   { name: "Kasuti Embroidered Fabric", category: "fabric", price: 1100, material: "Cotton", region: "Karnataka", stock: 20,
     description: "Traditional Karnataka embroidery counted and stitched thread-by-thread onto the fabric's own weave (no printed guide pattern), producing geometric motifs identical on both front and back -- traditionally hand-stitched into a bride's wedding saree." },
+  { name: "Batik Print Fabric", category: "fabric", price: 950, material: "Cotton", region: "West Bengal, Gujarat", stock: 25,
+    description: "Wax-resist dyeing craft where molten wax is hand-applied to the cloth in a floral or geometric pattern before dyeing, blocking the dye from those areas; the wax is later boiled off to reveal the design, often repeated in several dye baths for multi-colour work." },
 ];
 
 function slugify(name: string) {
