@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -53,6 +53,29 @@ export function AgentSidebar() {
   });
   const [pending, setPending] = useState(false);
   const [processingVoice, setProcessingVoice] = useState(false);
+  // Tracks the currently-playing TTS clip so a new voice segment (barge-in) can cut it off
+  // instead of overlapping with whatever the user is now saying.
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  function stopPlayback() {
+    const audio = currentAudioRef.current;
+    if (audio) {
+      audio.pause();
+      currentAudioRef.current = null;
+    }
+  }
+
+  function playAudio(base64Mp3: string) {
+    stopPlayback();
+    const audio = new Audio(`data:audio/mp3;base64,${base64Mp3}`);
+    audio.onended = () => {
+      if (currentAudioRef.current === audio) currentAudioRef.current = null;
+    };
+    currentAudioRef.current = audio;
+    audio.play().catch(() => {
+      if (currentAudioRef.current === audio) currentAudioRef.current = null;
+    });
+  }
 
   useEffect(() => {
     try {
@@ -195,6 +218,9 @@ export function AgentSidebar() {
   // back, since we don't have it up front. Audio auto-plays — the mic tap is the interaction
   // that unlocks autoplay for this response.
   async function sendVoice(audioBlob: Blob) {
+    // Barge-in: a new voice segment means the user is talking now, so whatever Venmathi was
+    // still saying should stop instead of playing over them.
+    stopPlayback();
     setProcessingVoice(true);
     const form = new FormData();
     form.append("audio", audioBlob, "voice.webm");
@@ -230,9 +256,7 @@ export function AgentSidebar() {
     ]);
     if (hasCartBlock(data.blocks ?? [])) router.refresh();
 
-    if (data.assistantAudio) {
-      new Audio(`data:audio/mp3;base64,${data.assistantAudio}`).play().catch(() => {});
-    }
+    if (data.assistantAudio) playAudio(data.assistantAudio);
   }
 
   // "Add to cart" on a product card is a direct action, not a chat message — it hits the
