@@ -75,6 +75,17 @@ const REAL_PRODUCT_IMAGES: Record<string, string> = {
   "wayanad-wild-turmeric-200g": "wayanad-wild-turmeric.jpg",
   "kerala-green-cardamom-100g": "kerala-green-cardamom.jpg",
   "copper-moscow-mule-mug": "copper-moscow-mule-mug.jpg",
+  "naga-handwoven-shawl": "naga-handwoven-shawl.jpg",
+  "malabar-black-pepper-250g": "malabar-black-pepper.jpg",
+  "kashmiri-saffron-5g": "kashmiri-saffron.jpg",
+  "warli-art-ceramic-mug": "warli-art-mug.jpg",
+  "madhubani-hand-painted-mug": "madhubani-mug.jpg",
+  "madhubani-painting-peacock": "madhubani-peacock.jpg",
+  "blue-pottery-ceramic-mug": "blue-pottery-mug.jpg",
+  "copper-water-bottle-hammered": "copper-water-bottle.jpg",
+  "pattachitra-hand-painted-plate": "pattachitra-plate.jpg",
+  "phulkari-embroidered-dupatta": "phulkari-dupatta.jpg",
+  "pashmina-shawl": "pashmina-shawl.jpg",
 };
 
 // Openly-licensed (CC BY / CC BY-SA) photos sourced via Openverse from Wikimedia Commons and
@@ -104,6 +115,17 @@ const IMAGE_ATTRIBUTION: Record<string, { creator: string; license: string; sour
   "wayanad-wild-turmeric-200g": { creator: "Steenbergs", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/50310535@N03/6865121460" },
   "kerala-green-cardamom-100g": { creator: "Misterneedlemouse", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=151971310" },
   "copper-moscow-mule-mug": { creator: "Will Shenton", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=49675066" },
+  "naga-handwoven-shawl": { creator: "RubyGoes", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/61997808@N00/6902197005" },
+  "malabar-black-pepper-250g": { creator: "Dvortygirl", license: "CC BY-SA 3.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=2584751" },
+  "kashmiri-saffron-5g": { creator: "ulleo", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=165535448" },
+  "warli-art-ceramic-mug": { creator: "brinda05", license: "CC BY 2.0", sourceUrl: "https://www.flickr.com/photos/47218854@N04/4327920957" },
+  "madhubani-hand-painted-mug": { creator: "Aaronwarnerella", license: "CC BY 2.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=145911711" },
+  "madhubani-painting-peacock": { creator: "Bhuvana Meenakshi", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=194454892" },
+  "blue-pottery-ceramic-mug": { creator: "Neek-Theri", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=128838642" },
+  "copper-water-bottle-hammered": { creator: "Unknown (museum piece)", license: "CC0 1.0", sourceUrl: "https://www.rawpixel.com/image/10139793/lota-water-jar-18th-19th-century-indian" },
+  "pattachitra-hand-painted-plate": { creator: "Sumita Roy Dutta", license: "CC BY-SA 4.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=100119903" },
+  "phulkari-embroidered-dupatta": { creator: "Hiart", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=25871820" },
+  "pashmina-shawl": { creator: "Hiart", license: "CC0 1.0", sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=73832006" },
 };
 
 type SeedProduct = {
@@ -289,6 +311,8 @@ const products: SeedProduct[] = [
     description: "Traditional Karnataka embroidery counted and stitched thread-by-thread onto the fabric's own weave (no printed guide pattern), producing geometric motifs identical on both front and back -- traditionally hand-stitched into a bride's wedding saree." },
   { name: "Batik Print Fabric", category: "fabric", price: 950, material: "Cotton", region: "West Bengal, Gujarat", stock: 25,
     description: "Wax-resist dyeing craft where molten wax is hand-applied to the cloth in a floral or geometric pattern before dyeing, blocking the dye from those areas; the wax is later boiled off to reveal the design, often repeated in several dye baths for multi-colour work." },
+  { name: "Pashmina Shawl", category: "fabric", price: 4500, material: "Pashmina Wool", region: "Kashmir", stock: 12,
+    description: "Woven from the fine undercoat fibre of the Changthangi mountain goat, hand-spun and hand-woven on a traditional loom in Kashmir; the resulting shawl is prized for being warm enough for Himalayan winters yet light enough to pass through a finger ring, often finished with hand-embroidered paisley (boteh) borders." },
 ];
 
 function slugify(name: string) {
