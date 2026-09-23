@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, RotateCcw } from "lucide-react";
 import { useAgentPanel } from "@/lib/agent/context";
 import { MessageList } from "@/components/agent/MessageList";
 import { ChatInput } from "@/components/agent/ChatInput";
@@ -61,6 +61,15 @@ export function AgentSidebar() {
       // ignore
     }
   }, [entries]);
+
+  function resetChat() {
+    setEntries([]);
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  }
 
   // WCAG dialog pattern: return focus to whatever triggered the panel once it closes.
   // ChatInput's autoFocus handles the other half (moving focus in on open).
@@ -357,9 +366,16 @@ export function AgentSidebar() {
                 <Sparkles className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Venmathi</span>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Close chat" className="p-1 hover:opacity-70">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {entries.length > 0 && (
+                  <button onClick={resetChat} aria-label="Start a new chat" title="Start a new chat" className="p-1 hover:opacity-70">
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+                <button onClick={() => setOpen(false)} aria-label="Close chat" className="p-1 hover:opacity-70">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {status === "loading" ? null : !session ? (
