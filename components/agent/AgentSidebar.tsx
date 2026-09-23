@@ -56,6 +56,10 @@ export function AgentSidebar() {
   // Tracks the currently-playing TTS clip so a new voice segment (barge-in) can cut it off
   // instead of overlapping with whatever the user is now saying.
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Bumped on every new voice segment so a slow TTS response from an earlier, since-interrupted
+  // turn can't play audio over whatever the user is now saying (barge-in, but for in-flight TTS
+  // fetches rather than active playback).
+  const voiceTurnRef = useRef(0);
 
   function stopPlayback() {
     const audio = currentAudioRef.current;
@@ -213,14 +217,17 @@ export function AgentSidebar() {
     }
   }
 
-  // Push-to-talk: sends the recorded clip to the voice route (STT -> agent loop -> TTS in one
-  // round trip, unlike text which streams). The user bubble shows the transcript once it comes
-  // back, since we don't have it up front. Audio auto-plays — the mic tap is the interaction
-  // that unlocks autoplay for this response.
+  // Push-to-talk: sends the recorded clip to the voice route (STT -> agent loop). The user
+  // bubble shows the transcript once it comes back, since we don't have it up front. TTS is a
+  // separate follow-up call (see /api/agent/tts) so the text/cards render as soon as STT+LLM
+  // finish rather than waiting on speech synthesis too — audio plays a beat later once it's
+  // ready. Audio auto-plays — the mic tap (or an active always-listening session) is the
+  // interaction that unlocks autoplay for this response.
   async function sendVoice(audioBlob: Blob) {
     // Barge-in: a new voice segment means the user is talking now, so whatever Venmathi was
     // still saying should stop instead of playing over them.
     stopPlayback();
+    const myTurn = ++voiceTurnRef.current;
     setProcessingVoice(true);
     const form = new FormData();
     form.append("audio", audioBlob, "voice.webm");
@@ -249,14 +256,32 @@ export function AgentSidebar() {
       return;
     }
 
+    const assistantEntryId = makeId();
     setEntries((prev) => [
       ...prev,
       { id: makeId(), role: "user", content: data.userTranscript },
-      { id: makeId(), role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [], audio: data.assistantAudio ?? undefined },
+      { id: assistantEntryId, role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [] },
     ]);
     if (hasCartBlock(data.blocks ?? [])) router.refresh();
 
-    if (data.assistantAudio) playAudio(data.assistantAudio);
+    if (data.assistantText) {
+      fetch("/api/agent/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: data.assistantText, languageCode: data.detectedLanguage }),
+      })
+        .then((r) => r.json())
+        .then((ttsData) => {
+          if (!ttsData.assistantAudio) return;
+          setEntries((prev) => prev.map((e) => (e.id === assistantEntryId ? { ...e, audio: ttsData.assistantAudio } : e)));
+          // Only auto-play if this is still the most recent voice turn -- an interrupted turn's
+          // TTS may resolve after a newer one has already started.
+          if (voiceTurnRef.current === myTurn) playAudio(ttsData.assistantAudio);
+        })
+        .catch(() => {
+          // Silent -- the text/cards response is already on screen, audio is a bonus.
+        });
+    }
   }
 
   // "Add to cart" on a product card is a direct action, not a chat message — it hits the
