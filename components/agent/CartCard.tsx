@@ -20,7 +20,7 @@ type CartLine = {
   stock: number;
 };
 
-export function CartCard({ items: initialItems }: { items: CartLine[] }) {
+export function CartCard({ items: initialItems, onCheckout }: { items: CartLine[]; onCheckout: () => void }) {
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -126,8 +126,8 @@ export function CartCard({ items: initialItems }: { items: CartLine[] }) {
         </div>
       </div>
 
-      <Button asChild size="sm" className="w-full">
-        <Link href="/checkout">Checkout</Link>
+      <Button type="button" size="sm" className="w-full" onClick={onCheckout}>
+        Checkout
       </Button>
     </div>
   );

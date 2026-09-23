@@ -34,7 +34,7 @@ export function BlockRenderer({
     case "quick_replies":
       return <QuickReplies question={block.question} options={block.options} onSelect={onQuickReply} />;
     case "cart":
-      return <CartCard items={block.items} />;
+      return <CartCard items={block.items} onCheckout={() => onQuickReply("let's checkout")} />;
     case "address_picker":
       return <AddressPicker addresses={block.addresses} onSelect={onSelectAddress} onAddNew={onRequestNewAddress} />;
     case "address_form":
