@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Ear, EarOff } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { VoiceButton } from "@/components/agent/VoiceButton";
-import { useAutoVoiceCapture } from "@/lib/agent/useAutoVoiceCapture";
-import { cn } from "@/lib/utils";
 
 export function ChatInput({
   onSend,
@@ -20,11 +17,6 @@ export function ChatInput({
   isProcessingVoice?: boolean;
 }) {
   const [value, setValue] = useState("");
-  const autoVoice = useAutoVoiceCapture(onSendVoice, !!disabled || !!isProcessingVoice);
-  const autoListening = autoVoice.state !== "off";
-
-  // Stop the mic stream if the panel/component unmounts while auto-listen is on.
-  useEffect(() => () => autoVoice.stop(), [autoVoice.stop]);
 
   return (
     <form
@@ -50,25 +42,7 @@ export function ChatInput({
         // once per open, matching the WCAG dialog pattern of moving focus in on open.
         autoFocus
       />
-      <button
-        type="button"
-        onClick={() => (autoListening ? autoVoice.stop() : autoVoice.start())}
-        disabled={disabled}
-        aria-label={autoListening ? "Stop always-listening mode" : "Start always-listening mode"}
-        aria-pressed={autoListening}
-        title={autoVoice.error ?? (autoListening ? "Listening — talk any time" : "Start always-listening")}
-        className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-md border",
-          autoVoice.state === "capturing"
-            ? "animate-pulse border-red-500 bg-red-500 text-white"
-            : autoListening
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted hover:bg-black/5"
-        )}
-      >
-        {autoListening ? <Ear className="h-5 w-5" /> : <EarOff className="h-5 w-5" />}
-      </button>
-      {!autoListening && <VoiceButton onAudioCaptured={onSendVoice} isProcessing={!!isProcessingVoice} disabled={disabled} />}
+      <VoiceButton onAudioCaptured={onSendVoice} isProcessing={!!isProcessingVoice} disabled={disabled} />
       <Button type="submit" disabled={disabled || !value.trim()}>
         Send
       </Button>

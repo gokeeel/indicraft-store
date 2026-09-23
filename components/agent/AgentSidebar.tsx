@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Sparkles, RotateCcw } from "lucide-react";
+import { X, Sparkles, RotateCcw, Mic } from "lucide-react";
 import { useAgentPanel } from "@/lib/agent/context";
 import { MessageList } from "@/components/agent/MessageList";
 import { ChatInput } from "@/components/agent/ChatInput";
+import { VoiceMode } from "@/components/agent/VoiceMode";
 import { Button } from "@/components/ui/button";
+import { useAutoVoiceCapture } from "@/lib/agent/useAutoVoiceCapture";
 import type { ChatEntry } from "@/lib/agent/client-types";
 import type { Block } from "@/lib/agent/blocks";
 
@@ -60,6 +62,24 @@ export function AgentSidebar() {
   // turn can't play audio over whatever the user is now saying (barge-in, but for in-flight TTS
   // fetches rather than active playback).
   const voiceTurnRef = useRef(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false);
+  // A single capture instance shared by Voice Mode -- it only actually opens the mic once
+  // start() is called, so instantiating it here doesn't prompt for permission up front.
+  // Deliberately NOT paused while isSpeaking: the VAD has to keep listening during TTS
+  // playback for barge-in (Day 2) to work at all -- pausing here would silently disable it.
+  const autoVoice = useAutoVoiceCapture(sendVoice, pending || processingVoice);
+
+  function openVoiceMode() {
+    setVoiceModeOpen(true);
+    autoVoice.start();
+  }
+
+  function closeVoiceMode() {
+    setVoiceModeOpen(false);
+    autoVoice.stop();
+    stopPlayback();
+  }
 
   function stopPlayback() {
     const audio = currentAudioRef.current;
@@ -67,17 +87,25 @@ export function AgentSidebar() {
       audio.pause();
       currentAudioRef.current = null;
     }
+    setIsSpeaking(false);
   }
 
   function playAudio(base64Mp3: string) {
     stopPlayback();
     const audio = new Audio(`data:audio/mp3;base64,${base64Mp3}`);
     audio.onended = () => {
-      if (currentAudioRef.current === audio) currentAudioRef.current = null;
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+        setIsSpeaking(false);
+      }
     };
     currentAudioRef.current = audio;
+    setIsSpeaking(true);
     audio.play().catch(() => {
-      if (currentAudioRef.current === audio) currentAudioRef.current = null;
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+        setIsSpeaking(false);
+      }
     });
   }
 
@@ -435,6 +463,17 @@ export function AgentSidebar() {
                   <Link href="/login">Log In</Link>
                 </Button>
               </div>
+            ) : voiceModeOpen ? (
+              <VoiceMode
+                state={autoVoice.state}
+                amplitude={autoVoice.amplitude}
+                error={autoVoice.error}
+                processing={processingVoice}
+                isSpeaking={isSpeaking}
+                lastUserLine={[...entries].reverse().find((e) => e.role === "user")?.content ?? null}
+                lastAssistantLine={[...entries].reverse().find((e) => e.role === "assistant")?.content ?? null}
+                onExit={closeVoiceMode}
+              />
             ) : (
               <>
                 {entries.length === 0 && (
@@ -443,6 +482,16 @@ export function AgentSidebar() {
                     spices — and I&apos;ll find it for you.
                   </div>
                 )}
+                <div className="border-b border-border bg-white px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={openVoiceMode}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
+                  >
+                    <Mic className="h-4 w-4" />
+                    Start Speaking
+                  </button>
+                </div>
                 <MessageList
                   entries={entries}
                   pending={pending}
