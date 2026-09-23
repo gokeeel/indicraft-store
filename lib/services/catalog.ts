@@ -22,9 +22,12 @@ export async function getProducts(
 ) {
   const where: Prisma.ProductWhereInput = {};
   if (filter.category) where.category = { slug: filter.category };
-  if (filter.material) where.material = filter.material;
-  if (filter.region) where.region = filter.region;
-  if (filter.occasion) where.occasion = filter.occasion;
+  // Substring match, not exact: a caller (the shopping agent especially) sends terms like
+  // "metal" or "wood" that should match "Brass", "Bell Metal (Kansa)", "Carved Wood", etc. --
+  // an exact match against those free-text fields returned zero results for any real request.
+  if (filter.material) where.material = { contains: filter.material, mode: "insensitive" };
+  if (filter.region) where.region = { contains: filter.region, mode: "insensitive" };
+  if (filter.occasion) where.occasion = { contains: filter.occasion, mode: "insensitive" };
   if (filter.minPrice != null || filter.maxPrice != null) {
     where.price = {};
     if (filter.minPrice != null) where.price.gte = filter.minPrice;

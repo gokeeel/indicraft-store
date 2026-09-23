@@ -63,12 +63,20 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
         type: "object",
         properties: {
           query: { type: "string", description: "Free-text search across name, description, material, region" },
-          category: { type: "string", description: "Category slug: fabric, home-decor, household, mugs, spices, uncategorized" },
+          category: {
+            type: "string",
+            description:
+              "Category slug: fabric, home-decor, household, mugs, spices, jewelry, paintings, uncategorized (shown to users as \"Gifts & Accessories\"). There is no separate \"wood\" or \"metal\" category -- wood/metal items are filed under home-decor or uncategorized; use the material field for those instead.",
+          },
           minPrice: { type: "number" },
           maxPrice: { type: "number" },
-          material: { type: "string" },
-          region: { type: "string" },
-          occasion: { type: "string" },
+          material: {
+            type: "string",
+            description:
+              "Substring match against the product's material field, e.g. \"wood\" matches \"Carved Wood\". This is a literal substring match, not a category of materials -- \"metal\" will NOT match \"Brass\" or \"Copper\" since neither contains the word \"metal\". For a general metal-item request, either omit this filter and rely on the free-text query field instead, or ask the user which specific metal (brass, copper, silver, bronze) they mean.",
+          },
+          region: { type: "string", description: "Substring match against the product's region, e.g. \"Rajasthan\"." },
+          occasion: { type: "string", description: "Substring match against the product's occasion, e.g. \"wedding\" or \"festive\"." },
           limit: { type: "number", description: "Max results to return, 1-8. Defaults to 8." },
         },
         required: [],
