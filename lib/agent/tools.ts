@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getProducts, getProductById, getCartSummary, getWishlist, addToWishlist, removeFromWishlist } from "@/lib/services/catalog";
 import { addToCart, updateCartItemQuantity, removeFromCart } from "@/lib/services/cart";
-import { getAddresses } from "@/lib/services/addresses";
+import { getAddresses, createAddress } from "@/lib/services/addresses";
 import { buildOrderPreview, type OrderPreview } from "@/lib/agent/preview";
 import { getRecentOrders } from "@/lib/services/orders";
 import type { ToolSchema } from "@/lib/agent/sarvam";
@@ -26,6 +26,15 @@ const getProductArgs = z.object({
 const askUserArgs = z.object({
   question: z.string().max(300),
   options: z.array(z.string().max(60)).min(2).max(6),
+});
+
+const requestNewAddressArgs = z.object({
+  name: z.string().min(1).optional(),
+  phone: z.string().min(6).optional(),
+  street: z.string().min(1).optional(),
+  city: z.string().min(1).optional(),
+  state: z.string().min(1).optional(),
+  postalCode: z.string().min(3).optional(),
 });
 
 const addToCartArgs = z.object({
@@ -174,8 +183,19 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
     function: {
       name: "request_new_address",
       description:
-        "Show the user a form to add a new shipping address. Call this when they want to check out and have no saved address, or want to use a different one. Takes no arguments and returns no data — never try to fill in the address fields yourself, the user types them into the form.",
-      parameters: { type: "object", properties: {}, required: [] },
+        "Add a new shipping address. In a spoken/voice conversation: ask the user for their full name, phone, street, city, state, and PIN code, then call this tool WITH those fields filled in once you have all of them — never leave the user staring at a typing form they can't use by voice. In a typed conversation, or if they'd rather type it themselves, call this with no arguments to show them a fill-in form instead.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Recipient's full name" },
+          phone: { type: "string", description: "Phone number" },
+          street: { type: "string", description: "Street address / house & area" },
+          city: { type: "string" },
+          state: { type: "string" },
+          postalCode: { type: "string", description: "PIN / postal code" },
+        },
+        required: [],
+      },
     },
   },
   {
@@ -245,6 +265,7 @@ export type ToolResult =
   | { tool: "cart"; error: string; available?: number }
   | { tool: "list_addresses"; addresses: Awaited<ReturnType<typeof getAddresses>> }
   | { tool: "request_new_address" }
+  | { tool: "request_new_address"; address: Awaited<ReturnType<typeof createAddress>> }
   | ({ tool: "order_summary" } & OrderPreview)
   | { tool: "order_summary"; error: string }
   | { tool: "orders"; orders: Awaited<ReturnType<typeof getRecentOrders>> }
@@ -319,6 +340,18 @@ export async function runTool(name: string, rawArgs: unknown, ctx: ToolContext):
       return { tool: "list_addresses", addresses };
     }
     case "request_new_address": {
+      const args = requestNewAddressArgs.parse(rawArgs ?? {});
+      if (args.name && args.phone && args.street && args.city && args.state && args.postalCode) {
+        const address = await createAddress(ctx.userId, {
+          name: args.name,
+          phone: args.phone,
+          line1: args.street,
+          city: args.city,
+          state: args.state,
+          zip: args.postalCode,
+        });
+        return { tool: "request_new_address", address };
+      }
       return { tool: "request_new_address" };
     }
     case "preview_order": {

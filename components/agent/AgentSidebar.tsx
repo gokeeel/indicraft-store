@@ -38,6 +38,10 @@ function hasCartBlock(blocks: Block[]): boolean {
   return blocks.some((b) => b.type === "cart" || b.type === "payment_link");
 }
 
+// Deliberately generous (English + common Tanglish/Tamil affirmatives) -- a missed "yes" just
+// means the user repeats themselves or taps Confirm instead, which is the low-cost failure mode.
+const CONFIRM_PHRASE = /\b(yes|yeah|yep|confirm|go ahead|place (the )?order|book it|pay now|okay|ok)\b|pannu|sari|seri|செய்|பண்ணு|சரி/i;
+
 export function AgentSidebar() {
   const { open, setOpen, toggle, pendingMessage, clearPendingMessage } = useAgentPanel();
   const { data: session, status } = useSession();
@@ -62,6 +66,10 @@ export function AgentSidebar() {
   // turn can't play audio over whatever the user is now saying (barge-in, but for in-flight TTS
   // fetches rather than active playback).
   const voiceTurnRef = useRef(0);
+  // Last detected speech language, reused for the "thank you" line spoken after a voice-
+  // confirmed order — that confirm never goes through the LLM/voice route, so there's no
+  // per-turn detectedLanguage to read at that point.
+  const lastLanguageRef = useRef<string | undefined>(undefined);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceModeOpen, setVoiceModeOpen] = useState(false);
   // A single capture instance shared by Voice Mode -- it only actually opens the mic once
@@ -284,6 +292,18 @@ export function AgentSidebar() {
       return;
     }
 
+    if (data.detectedLanguage) lastLanguageRef.current = data.detectedLanguage;
+
+    // Order creation can never be something the model triggers (see confirmOrder below) — so a
+    // spoken "yes, confirm" is caught here, client-side, against whatever order summary was
+    // actually just shown, instead of relying on the LLM to somehow place the order itself.
+    const pendingToken = pendingConfirmToken();
+    if (pendingToken && CONFIRM_PHRASE.test(data.userTranscript ?? "")) {
+      setEntries((prev) => [...prev, { id: makeId(), role: "user", content: data.userTranscript }]);
+      await confirmOrder(pendingToken, { speak: true });
+      return;
+    }
+
     const assistantEntryId = makeId();
     setEntries((prev) => [
       ...prev,
@@ -373,8 +393,18 @@ export function AgentSidebar() {
     ]);
   }
 
-  // Clicking Confirm in the order summary — the only path that can ever create an order.
-  async function confirmOrder(confirmToken: string) {
+  // If the most recently shown card is a still-open order summary, its confirmToken is fair
+  // game for a spoken "yes" to act on — anything older is stale and shouldn't be confirmable
+  // by an unrelated later "yes".
+  function pendingConfirmToken(): string | null {
+    const last = [...entries].reverse().find((e) => e.role === "assistant");
+    const block = last?.blocks?.find((b) => b.type === "order_summary");
+    return block && block.type === "order_summary" ? block.confirmToken : null;
+  }
+
+  // Clicking Confirm in the order summary, or a voice "yes" against a pending one (sendVoice)
+  // — the only two paths that can ever create an order; the model itself never calls this.
+  async function confirmOrder(confirmToken: string, opts: { speak?: boolean } = {}) {
     const res = await fetch("/api/agent/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -409,6 +439,33 @@ export function AgentSidebar() {
       },
     ]);
     router.refresh(); // order creation clears the cart server-side; reflect that in the header
+
+    // Best-effort: opens in most browsers since this runs synchronously off a user action (a
+    // tap, or the fetch above resolving right after one) — if a popup blocker still catches it,
+    // the Pay Now link on the payment card is the fallback.
+    if (result.paymentUrl) {
+      try {
+        window.open(result.paymentUrl, "_blank", "noopener");
+      } catch {
+        // ignore
+      }
+    }
+
+    if (opts.speak) {
+      const thankYou = "Thank you! I've opened your payment page — please complete the payment there.";
+      fetch("/api/agent/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: thankYou, languageCode: lastLanguageRef.current }),
+      })
+        .then((r) => r.json())
+        .then((ttsData) => {
+          if (ttsData.assistantAudio) playAudio(ttsData.assistantAudio);
+        })
+        .catch(() => {
+          // Silent -- the on-screen payment card is already there, audio is a bonus.
+        });
+    }
   }
 
   // "+ Add a new address" is pure UI — no server round trip needed to show the form.
@@ -472,7 +529,13 @@ export function AgentSidebar() {
                 isSpeaking={isSpeaking}
                 lastUserLine={[...entries].reverse().find((e) => e.role === "user")?.content ?? null}
                 lastAssistantLine={[...entries].reverse().find((e) => e.role === "assistant")?.content ?? null}
+                blocks={[...entries].reverse().find((e) => e.role === "assistant")?.blocks ?? []}
                 onExit={closeVoiceMode}
+                onQuickReply={send}
+                onAddToCart={addToCart}
+                onSelectAddress={selectAddress}
+                onRequestNewAddress={requestNewAddress}
+                onConfirmOrder={confirmOrder}
               />
             ) : (
               <>

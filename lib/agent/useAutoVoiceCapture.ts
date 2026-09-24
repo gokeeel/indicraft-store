@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // VAD model to reject background noise; this is the pragmatic version for the 3-day timeline.
 const SPEECH_RMS_THRESHOLD = 0.03;
 const SPEECH_ONSET_MS = 250;
-const SILENCE_TO_STOP_MS = 1200;
+const SILENCE_TO_STOP_MS = 650;
 const MAX_SEGMENT_MS = 20_000;
 
 export type AutoVoiceState = "off" | "idle" | "capturing";
