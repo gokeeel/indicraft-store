@@ -6,6 +6,7 @@ import { getLLM } from "@/lib/agent/sarvam";
 import { runAgentLoop } from "@/lib/agent/loop";
 import { checkRateLimit } from "@/lib/agent/rateLimit";
 import { transcribeAudio } from "@/lib/agent/stt";
+import { synthesizeSpeech } from "@/lib/agent/tts";
 
 const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
 
@@ -19,13 +20,15 @@ export async function POST(req: NextRequest) {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // STT is heavier than a text turn but TTS now happens in a separate /api/agent/tts call
-  // (see that route for why), so this one counts as a single request like /api/agent/chat.
-  const rate = checkRateLimit(userId);
-  if (!rate.allowed) {
+  // Voice is more expensive than a text turn (STT + LLM + TTS) — count it as 2 requests
+  // against the same per-user bucket used by /api/agent/chat.
+  const first = checkRateLimit(userId);
+  const second = checkRateLimit(userId);
+  if (!first.allowed || !second.allowed) {
+    const retryAfterSeconds = second.retryAfterSeconds ?? first.retryAfterSeconds;
     return NextResponse.json(
       { error: "Venmathi's a little overwhelmed — give her a few seconds and try again." },
-      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
     );
   }
 
@@ -60,15 +63,21 @@ export async function POST(req: NextRequest) {
     const history = [...historyParsed.data, { role: "user" as const, content: stt.transcript }];
     const agentResult = await runAgentLoop(getLLM(), history, { userId });
 
-    // TTS is deliberately not synthesized here -- the client renders this text/blocks response
-    // immediately, then fires a separate /api/agent/tts call and plays audio when that resolves.
-    // Doing TTS inline used to mean the user saw and heard nothing until STT+LLM+TTS all
-    // finished; splitting it cuts perceived latency to roughly STT+LLM, with audio catching up
-    // a beat later instead of gating everything.
+    let assistantAudio: string | null = null;
+    if (agentResult.assistantText) {
+      assistantAudio = await synthesizeSpeech(agentResult.assistantText, stt.languageCode)
+        .then((r) => r.audioBase64)
+        .catch((err) => {
+          console.error("[agent/voice] TTS failed, falling back to text-only", err);
+          return null;
+        });
+    }
+
     return NextResponse.json({
       userTranscript: stt.transcript,
       detectedLanguage: stt.languageCode,
       assistantText: agentResult.assistantText,
+      assistantAudio,
       blocks: agentResult.blocks,
     });
   } catch (err) {

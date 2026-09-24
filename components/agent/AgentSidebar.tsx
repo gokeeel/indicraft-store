@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Sparkles, RotateCcw, Mic } from "lucide-react";
+import { X, Sparkles, RotateCcw } from "lucide-react";
 import { useAgentPanel } from "@/lib/agent/context";
 import { MessageList } from "@/components/agent/MessageList";
 import { ChatInput } from "@/components/agent/ChatInput";
-import { VoiceMode } from "@/components/agent/VoiceMode";
 import { Button } from "@/components/ui/button";
-import { useAutoVoiceCapture } from "@/lib/agent/useAutoVoiceCapture";
 import type { ChatEntry } from "@/lib/agent/client-types";
 import type { Block } from "@/lib/agent/blocks";
 
@@ -38,10 +36,6 @@ function hasCartBlock(blocks: Block[]): boolean {
   return blocks.some((b) => b.type === "cart" || b.type === "payment_link");
 }
 
-// Deliberately generous (English + common Tanglish/Tamil affirmatives) -- a missed "yes" just
-// means the user repeats themselves or taps Confirm instead, which is the low-cost failure mode.
-const CONFIRM_PHRASE = /\b(yes|yeah|yep|confirm|go ahead|place (the )?order|book it|pay now|okay|ok)\b|pannu|sari|seri|செய்|பண்ணு|சரி/i;
-
 export function AgentSidebar() {
   const { open, setOpen, toggle, pendingMessage, clearPendingMessage } = useAgentPanel();
   const { data: session, status } = useSession();
@@ -59,63 +53,6 @@ export function AgentSidebar() {
   });
   const [pending, setPending] = useState(false);
   const [processingVoice, setProcessingVoice] = useState(false);
-  // Tracks the currently-playing TTS clip so a new voice segment (barge-in) can cut it off
-  // instead of overlapping with whatever the user is now saying.
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  // Bumped on every new voice segment so a slow TTS response from an earlier, since-interrupted
-  // turn can't play audio over whatever the user is now saying (barge-in, but for in-flight TTS
-  // fetches rather than active playback).
-  const voiceTurnRef = useRef(0);
-  // Last detected speech language, reused for the "thank you" line spoken after a voice-
-  // confirmed order — that confirm never goes through the LLM/voice route, so there's no
-  // per-turn detectedLanguage to read at that point.
-  const lastLanguageRef = useRef<string | undefined>(undefined);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceModeOpen, setVoiceModeOpen] = useState(false);
-  // A single capture instance shared by Voice Mode -- it only actually opens the mic once
-  // start() is called, so instantiating it here doesn't prompt for permission up front.
-  // Deliberately NOT paused while isSpeaking: the VAD has to keep listening during TTS
-  // playback for barge-in (Day 2) to work at all -- pausing here would silently disable it.
-  const autoVoice = useAutoVoiceCapture(sendVoice, pending || processingVoice);
-
-  function openVoiceMode() {
-    setVoiceModeOpen(true);
-    autoVoice.start();
-  }
-
-  function closeVoiceMode() {
-    setVoiceModeOpen(false);
-    autoVoice.stop();
-    stopPlayback();
-  }
-
-  function stopPlayback() {
-    const audio = currentAudioRef.current;
-    if (audio) {
-      audio.pause();
-      currentAudioRef.current = null;
-    }
-    setIsSpeaking(false);
-  }
-
-  function playAudio(base64Mp3: string) {
-    stopPlayback();
-    const audio = new Audio(`data:audio/mp3;base64,${base64Mp3}`);
-    audio.onended = () => {
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-        setIsSpeaking(false);
-      }
-    };
-    currentAudioRef.current = audio;
-    setIsSpeaking(true);
-    audio.play().catch(() => {
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-        setIsSpeaking(false);
-      }
-    });
-  }
 
   useEffect(() => {
     try {
@@ -253,17 +190,11 @@ export function AgentSidebar() {
     }
   }
 
-  // Push-to-talk: sends the recorded clip to the voice route (STT -> agent loop). The user
-  // bubble shows the transcript once it comes back, since we don't have it up front. TTS is a
-  // separate follow-up call (see /api/agent/tts) so the text/cards render as soon as STT+LLM
-  // finish rather than waiting on speech synthesis too — audio plays a beat later once it's
-  // ready. Audio auto-plays — the mic tap (or an active always-listening session) is the
-  // interaction that unlocks autoplay for this response.
+  // Push-to-talk: sends the recorded clip to the voice route (STT -> agent loop -> TTS in one
+  // round trip, unlike text which streams). The user bubble shows the transcript once it comes
+  // back, since we don't have it up front. Audio auto-plays — the mic tap is the interaction
+  // that unlocks autoplay for this response.
   async function sendVoice(audioBlob: Blob) {
-    // Barge-in: a new voice segment means the user is talking now, so whatever Venmathi was
-    // still saying should stop instead of playing over them.
-    stopPlayback();
-    const myTurn = ++voiceTurnRef.current;
     setProcessingVoice(true);
     const form = new FormData();
     form.append("audio", audioBlob, "voice.webm");
@@ -292,43 +223,15 @@ export function AgentSidebar() {
       return;
     }
 
-    if (data.detectedLanguage) lastLanguageRef.current = data.detectedLanguage;
-
-    // Order creation can never be something the model triggers (see confirmOrder below) — so a
-    // spoken "yes, confirm" is caught here, client-side, against whatever order summary was
-    // actually just shown, instead of relying on the LLM to somehow place the order itself.
-    const pendingToken = pendingConfirmToken();
-    if (pendingToken && CONFIRM_PHRASE.test(data.userTranscript ?? "")) {
-      setEntries((prev) => [...prev, { id: makeId(), role: "user", content: data.userTranscript }]);
-      await confirmOrder(pendingToken, { speak: true });
-      return;
-    }
-
-    const assistantEntryId = makeId();
     setEntries((prev) => [
       ...prev,
       { id: makeId(), role: "user", content: data.userTranscript },
-      { id: assistantEntryId, role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [] },
+      { id: makeId(), role: "assistant", content: data.assistantText ?? "", blocks: data.blocks ?? [], audio: data.assistantAudio ?? undefined },
     ]);
     if (hasCartBlock(data.blocks ?? [])) router.refresh();
 
-    if (data.assistantText) {
-      fetch("/api/agent/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: data.assistantText, languageCode: data.detectedLanguage }),
-      })
-        .then((r) => r.json())
-        .then((ttsData) => {
-          if (!ttsData.assistantAudio) return;
-          setEntries((prev) => prev.map((e) => (e.id === assistantEntryId ? { ...e, audio: ttsData.assistantAudio } : e)));
-          // Only auto-play if this is still the most recent voice turn -- an interrupted turn's
-          // TTS may resolve after a newer one has already started.
-          if (voiceTurnRef.current === myTurn) playAudio(ttsData.assistantAudio);
-        })
-        .catch(() => {
-          // Silent -- the text/cards response is already on screen, audio is a bonus.
-        });
+    if (data.assistantAudio) {
+      new Audio(`data:audio/mp3;base64,${data.assistantAudio}`).play().catch(() => {});
     }
   }
 
@@ -393,18 +296,8 @@ export function AgentSidebar() {
     ]);
   }
 
-  // If the most recently shown card is a still-open order summary, its confirmToken is fair
-  // game for a spoken "yes" to act on — anything older is stale and shouldn't be confirmable
-  // by an unrelated later "yes".
-  function pendingConfirmToken(): string | null {
-    const last = [...entries].reverse().find((e) => e.role === "assistant");
-    const block = last?.blocks?.find((b) => b.type === "order_summary");
-    return block && block.type === "order_summary" ? block.confirmToken : null;
-  }
-
-  // Clicking Confirm in the order summary, or a voice "yes" against a pending one (sendVoice)
-  // — the only two paths that can ever create an order; the model itself never calls this.
-  async function confirmOrder(confirmToken: string, opts: { speak?: boolean } = {}) {
+  // Clicking Confirm in the order summary — the only path that can ever create an order.
+  async function confirmOrder(confirmToken: string) {
     const res = await fetch("/api/agent/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -439,33 +332,6 @@ export function AgentSidebar() {
       },
     ]);
     router.refresh(); // order creation clears the cart server-side; reflect that in the header
-
-    // Best-effort: opens in most browsers since this runs synchronously off a user action (a
-    // tap, or the fetch above resolving right after one) — if a popup blocker still catches it,
-    // the Pay Now link on the payment card is the fallback.
-    if (result.paymentUrl) {
-      try {
-        window.open(result.paymentUrl, "_blank", "noopener");
-      } catch {
-        // ignore
-      }
-    }
-
-    if (opts.speak) {
-      const thankYou = "Thank you! I've opened your payment page — please complete the payment there.";
-      fetch("/api/agent/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: thankYou, languageCode: lastLanguageRef.current }),
-      })
-        .then((r) => r.json())
-        .then((ttsData) => {
-          if (ttsData.assistantAudio) playAudio(ttsData.assistantAudio);
-        })
-        .catch(() => {
-          // Silent -- the on-screen payment card is already there, audio is a bonus.
-        });
-    }
   }
 
   // "+ Add a new address" is pure UI — no server round trip needed to show the form.
@@ -520,23 +386,6 @@ export function AgentSidebar() {
                   <Link href="/login">Log In</Link>
                 </Button>
               </div>
-            ) : voiceModeOpen ? (
-              <VoiceMode
-                state={autoVoice.state}
-                amplitude={autoVoice.amplitude}
-                error={autoVoice.error}
-                processing={processingVoice}
-                isSpeaking={isSpeaking}
-                lastUserLine={[...entries].reverse().find((e) => e.role === "user")?.content ?? null}
-                lastAssistantLine={[...entries].reverse().find((e) => e.role === "assistant")?.content ?? null}
-                blocks={[...entries].reverse().find((e) => e.role === "assistant")?.blocks ?? []}
-                onExit={closeVoiceMode}
-                onQuickReply={send}
-                onAddToCart={addToCart}
-                onSelectAddress={selectAddress}
-                onRequestNewAddress={requestNewAddress}
-                onConfirmOrder={confirmOrder}
-              />
             ) : (
               <>
                 {entries.length === 0 && (
@@ -545,16 +394,6 @@ export function AgentSidebar() {
                     spices — and I&apos;ll find it for you.
                   </div>
                 )}
-                <div className="border-b border-border bg-white px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={openVoiceMode}
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
-                  >
-                    <Mic className="h-4 w-4" />
-                    Start Speaking
-                  </button>
-                </div>
                 <MessageList
                   entries={entries}
                   pending={pending}

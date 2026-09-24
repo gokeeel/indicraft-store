@@ -36,10 +36,7 @@ export function toBlocks(result: ToolResult): Block[] {
     case "list_addresses":
       return [{ type: "address_picker", addresses: result.addresses }];
     case "request_new_address":
-      // Voice conversations pass parsed fields and the address is created immediately -- show
-      // it as a (single-item) pickable card so the user sees it landed, and the model can chain
-      // straight into preview_order with it. No fields means a typed conversation: show the form.
-      return "address" in result ? [{ type: "address_picker", addresses: [result.address] }] : [{ type: "address_form" }];
+      return [{ type: "address_form" }];
     case "order_summary":
       return "items" in result
         ? [
